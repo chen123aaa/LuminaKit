@@ -6,7 +6,7 @@
 
 极简、高调、为安静的产品界面而生。
 
-![IridescentBlob](Docs/Assets/iridescent-blob.gif)
+https://github.com/user-attachments/assets/2d0a54fe-cfac-43f4-9cd3-441d9c33a029
 
 ## 组件
 
