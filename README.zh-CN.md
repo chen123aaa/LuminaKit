@@ -6,13 +6,13 @@
 
 极简、高调、为安静的产品界面而生。
 
-<video src="Docs/Assets/iridescent-blob.mp4" autoplay loop muted playsinline width="420"></video>
+![IridescentBlob](Docs/Assets/iridescent-blob.gif)
 
 ## 组件
 
 | 组件 | 说明 | 预览 |
 |---|---|---|
-| **IridescentBlob** | 半透明珍珠软球：流体褶皱、薄膜虹彩、柔和高光 | [MP4](Docs/Assets/iridescent-blob.mp4) · [PNG](Preview/iridescent-blob.png) |
+| **IridescentBlob** | 半透明珍珠软球：流体褶皱、薄膜虹彩、柔和高光 | [GIF](Docs/Assets/iridescent-blob.gif) · [MP4](Docs/Assets/iridescent-blob.mp4) · [PNG](Preview/iridescent-blob.png) |
 
 后续组件会陆续加入本仓库。
 

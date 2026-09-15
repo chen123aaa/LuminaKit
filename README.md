@@ -6,13 +6,13 @@ Premium soft / translucent / light-forward SwiftUI components.
 
 Minimal. High-key. Built for calm product UIs.
 
-<video src="Docs/Assets/iridescent-blob.mp4" autoplay loop muted playsinline width="420"></video>
+![IridescentBlob](Docs/Assets/iridescent-blob.gif)
 
 ## Components
 
 | Component | Description | Preview |
 |---|---|---|
-| **IridescentBlob** | Translucent pearl blob with liquid folds, thin-film iridescence, soft high-gloss lighting | [MP4](Docs/Assets/iridescent-blob.mp4) · [PNG](Preview/iridescent-blob.png) |
+| **IridescentBlob** | Translucent pearl blob with liquid folds, thin-film iridescence, soft high-gloss lighting | [GIF](Docs/Assets/iridescent-blob.gif) · [MP4](Docs/Assets/iridescent-blob.mp4) · [PNG](Preview/iridescent-blob.png) |
 
 More components will land here as the library grows.
 
