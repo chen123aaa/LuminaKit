@@ -1,0 +1,194 @@
+/*!
+ * LuminaKit — GlowButton
+ * A button whose glow follows the pointer.
+ *
+ * Public custom properties (set on .lg-btn or any ancestor):
+ *   --lg-glow         glow color as "r g b"            default: 111 199 255
+ *   --lg-glow-size    radius of the trailing glow (px) default: 160
+ *   --lg-glow-alpha   0–1 overall glow strength        default: 1
+ *   --lg-radius       corner radius (px)               default: 14
+ *   --lg-bg           surface fill                     default: #1b1d23
+ *   --lg-fg           label color                      default: #f5f7fa
+ *   --lg-border       resting border color             default: rgba(255,255,255,.16)
+ *   --lg-pad-x        horizontal padding               default: 22px
+ *   --lg-pad-y        vertical padding                 default: 13px
+ */
+
+.lg-btn {
+  --lg-glow: 111 199 255;
+  --lg-glow-size: 160;
+  --lg-glow-alpha: 1;
+  --lg-radius: 14;
+  --lg-bg: #1b1d23;
+  --lg-fg: #f5f7fa;
+  --lg-border: rgba(255, 255, 255, 0.16);
+  --lg-pad-x: 22px;
+  --lg-pad-y: 13px;
+
+  /* live pointer position, driven by JS (unit-space px inside the button) */
+  --lg-mx: 50%;
+  --lg-my: 50%;
+  --lg-hover: 0;
+
+  position: relative;
+  isolation: isolate;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  padding: var(--lg-pad-y) var(--lg-pad-x);
+  border: 0;
+  border-radius: calc(var(--lg-radius) * 1px);
+  background: var(--lg-bg);
+  color: var(--lg-fg);
+
+  font: inherit;
+  font-weight: 550;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  cursor: pointer;
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+
+  /* resting border drawn via inset shadow so it never fights the glow layers */
+  box-shadow: inset 0 0 0 1px var(--lg-border);
+  transition:
+    transform 0.18s cubic-bezier(0.2, 0.8, 0.3, 1),
+    box-shadow 0.25s ease;
+}
+
+/* ---- 1. soft radial glow that trails the pointer ---- */
+.lg-btn::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  /* Must sit ABOVE the button's own background. z-index:-1 would paint the
+     glow behind the surface and make it invisible. */
+  z-index: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+    calc(var(--lg-glow-size) * 1px) circle at var(--lg-mx) var(--lg-my),
+    rgb(var(--lg-glow) / calc(0.55 * var(--lg-glow-alpha))),
+    rgb(var(--lg-glow) / calc(0.20 * var(--lg-glow-alpha))) 45%,
+    transparent 72%
+  );
+  opacity: var(--lg-hover);
+  transition: opacity 0.25s ease;
+  pointer-events: none;
+}
+
+/* ---- 2. edge highlight near the pointer ---- */
+.lg-btn::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: radial-gradient(
+    calc(var(--lg-glow-size) * 0.9px) circle at var(--lg-mx) var(--lg-my),
+    rgb(var(--lg-glow) / calc(0.95 * var(--lg-glow-alpha))),
+    rgb(var(--lg-glow) / calc(0.30 * var(--lg-glow-alpha))) 40%,
+    transparent 70%
+  );
+  /* keep only the 1.5px ring */
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  opacity: var(--lg-hover);
+  transition: opacity 0.25s ease;
+  pointer-events: none;
+}
+
+/* ---- 3. hot specular dot right under the cursor ---- */
+.lg-btn .lg-dot {
+  position: absolute;
+  z-index: 2;
+  left: var(--lg-mx);
+  top: var(--lg-my);
+  width: 4px;
+  height: 4px;
+  margin: -2px 0 0 -2px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgb(255 255 255 / calc(0.85 * var(--lg-glow-alpha))),
+    transparent 70%
+  );
+  opacity: var(--lg-hover);
+  transition: opacity 0.25s ease;
+  pointer-events: none;
+}
+
+/* label sits above every glow layer */
+.lg-btn > .lg-label {
+  position: relative;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ---- states ---- */
+.lg-btn:hover {
+  --lg-hover: 1;
+}
+
+.lg-btn:active {
+  transform: scale(0.975);
+}
+
+.lg-btn:focus-visible {
+  outline: 2px solid rgb(var(--lg-glow) / 0.9);
+  outline-offset: 2px;
+}
+
+.lg-btn:disabled,
+.lg-btn[aria-disabled="true"] {
+  opacity: 0.45;
+  cursor: not-allowed;
+  --lg-hover: 0 !important;
+}
+
+/* light-backdrop variant: swap to normal blending, softer alpha */
+.lg-btn--light {
+  --lg-bg: #ffffff;
+  --lg-fg: #14161a;
+  --lg-border: rgba(20, 22, 26, 0.12);
+}
+.lg-btn--light::before {
+  mix-blend-mode: normal;
+  background: radial-gradient(
+    calc(var(--lg-glow-size) * 1px) circle at var(--lg-mx) var(--lg-my),
+    rgb(var(--lg-glow) / calc(0.30 * var(--lg-glow-alpha))),
+    rgb(var(--lg-glow) / calc(0.12 * var(--lg-glow-alpha))) 45%,
+    transparent 72%
+  );
+}
+.lg-btn--light::after {
+  padding: 1.25px;
+}
+
+/* brighter blending on dark surfaces */
+.lg-btn:not(.lg-btn--light)::before,
+.lg-btn:not(.lg-btn--light)::after {
+  mix-blend-mode: plus-lighter;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lg-btn,
+  .lg-btn::before,
+  .lg-btn::after,
+  .lg-btn .lg-dot {
+    transition-duration: 0.01ms;
+  }
+  .lg-btn:active {
+    transform: none;
+  }
+}

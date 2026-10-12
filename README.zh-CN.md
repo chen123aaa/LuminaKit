@@ -2,75 +2,89 @@
 
 [English](README.md) | [简体中文](README.zh-CN.md)
 
-偏高级质感的 SwiftUI 组件库：半透明、软材质、光效与流体形态。
+偏高级质感的 UI 组件库：半透明、软材质、光效。
+极简、高调，为安静的产品界面而生。
 
-极简、高调、为安静的产品界面而生。
-
-https://github.com/user-attachments/assets/2d0a54fe-cfac-43f4-9cd3-441d9c33a029
+原生用 SwiftUI，网页用纯 HTML/CSS/JS，无任何前端依赖。
 
 ## 组件
 
-| 组件 | 说明 | 预览 |
-|---|---|---|
-| **IridescentBlob** | 半透明珍珠软球：流体褶皱、薄膜虹彩、柔和高光 | [GIF](Docs/Assets/iridescent-blob.gif) · [MP4](Docs/Assets/iridescent-blob.mp4) · [PNG](Preview/iridescent-blob.png) |
+| 组件 | 平台 | 说明 | 预览 |
+|---|---|---|---|
+| **IridescentBlob** | SwiftUI | 半透明珍珠软球：流体褶皱、薄膜虹彩、柔和高光 | [GIF](Docs/Assets/iridescent-blob.gif) · [MP4](Docs/Assets/iridescent-blob.mp4) |
+| **GlowButton** | Web | 光标跟随光效按钮：柔光 + 边缘高光随指针移动 | [GIF](Docs/Assets/glow-button.gif) |
 
-后续组件会陆续加入本仓库。
+---
 
-## 环境要求
+## IridescentBlob — SwiftUI
 
-- iOS 17+ / macOS 14+ / tvOS 17+ / visionOS 1+
-- Metal
+https://github.com/user-attachments/assets/2d0a54fe-cfac-43f4-9cd3-441d9c33a029
 
-## 安装
+**环境要求**：iOS 17+ / macOS 14+ / tvOS 17+ / visionOS 1+，需要 Metal
 
-### Swift Package Manager
-
-Xcode：**File → Add Package Dependencies…**
+**安装** — Xcode → *File → Add Package Dependencies…*
 
 ```
 https://github.com/chen123aaa/LuminaKit.git
 ```
 
-或在 `Package.swift` 中：
-
-```swift
-.package(url: "https://github.com/chen123aaa/LuminaKit.git", from: "0.1.0")
-```
-
-## 用法
+**用法**
 
 ```swift
 import LuminaKit
 
-struct ContentView: View {
-    var body: some View {
-        IridescentBlobView()
-            .ignoresSafeArea()
-    }
-}
+IridescentBlobView()                       // 默认
+IridescentBlobView(morph: 1.2, speed: 0.8)
 ```
-
-### 参数
 
 | 参数 | 类型 | 默认 | 说明 |
 |---|---|---|---|
 | `morph` | `Float` | `1.0` | 褶皱强度（`0.4…1.4`） |
 | `speed` | `Float` | `1.0` | 播放速度（`0.4…1.8`） |
 
-```swift
-IridescentBlobView(morph: 1.2, speed: 0.8)
+---
+
+## GlowButton — Web
+
+![GlowButton](Docs/Assets/glow-button.gif)
+
+鼠标滑过时，柔光与边缘高光跟随指针移动，并带一点延迟拖尾，让光有重量感。
+径向柔光、描边高光和光标处的高光点三层一起跟随。
+
+**安装** — 复制这两个文件，或直接引用：
+
+```html
+<link rel="stylesheet" href="web/glow-button/lumina-glow-button.css">
+<script src="web/glow-button/lumina-glow-button.js"></script>
+
+<button class="lg-btn">继续</button>
 ```
+
+脚本会自动初始化页面上所有 `.lg-btn`。
+
+**用 CSS 变量调整**
+
+```css
+.lg-btn {
+  --lg-glow: 111 199 255;   /* 光效颜色，"r g b" */
+  --lg-glow-size: 160;      /* 拖尾柔光半径，px */
+  --lg-glow-alpha: 1;       /* 0–1 强度 */
+  --lg-radius: 14;          /* 圆角，px */
+}
+```
+
+按钮位于浅色背景时，加 `.lg-btn--light`。
+
+**演示**：打开 [`web/index.html`](web/index.html)。
+
+---
 
 ## 设计要点
 
 - 软 SDF 球体 + domain-warped 脊线噪声（流体褶皱）
-- 薄膜虹彩主要落在轮廓边缘与褶皱棱线
+- 薄膜虹彩集中在轮廓边缘与褶皱棱线
 - 高调乳白基底，无硬阴影
-- 浅冷灰底（`#F2F2F3`），适配安静 UI 画布
-
-## 示例工程
-
-`Demo/IridescentBlobDemo.swift` 可直接作为 macOS / iOS 的 `@main` App 运行。
+- 光效跟随使用插值缓动，产生拖尾而不是瞬间吸附
 
 ## 许可证
 

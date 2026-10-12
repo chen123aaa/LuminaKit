@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LuminaKit — GlowButton</title>
+<link rel="stylesheet" href="glow-button/lumina-glow-button.css">
+<style>
+  :root {
+    --bg: #0a0b0f;
+    --surface: #14161c;
+    --surface-2: #1b1e26;
+    --ink: #f2f4f8;
+    --muted: #8d95a6;
+    --line: rgba(255, 255, 255, 0.08);
+    --cyan: 111 199 255;
+    --violet: 182 156 255;
+    --rose: 255 158 196;
+    --mint: 158 245 216;
+    --sand: 255 214 158;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body { margin: 0; }
+
+  body {
+    background:
+      radial-gradient(1100px 620px at 50% -12%, rgba(111, 199, 255, 0.10), transparent 62%),
+      radial-gradient(900px 520px at 82% 8%, rgba(182, 156, 255, 0.07), transparent 60%),
+      var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+      "Hiragino Sans GB", "Microsoft YaHei", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.55;
+    min-height: 100vh;
+  }
+
+  .wrap {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 72px 28px 96px;
+  }
+
+  header { margin-bottom: 56px; }
+
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 18px;
+  }
+
+  .eyebrow .pip {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: rgb(var(--cyan));
+    box-shadow: 0 0 12px rgb(var(--cyan) / 0.9);
+  }
+
+  h1 {
+    font-size: clamp(30px, 5vw, 46px);
+    line-height: 1.1;
+    letter-spacing: -0.03em;
+    font-weight: 640;
+    margin: 0 0 14px;
+  }
+
+  h1 .grad {
+    background: linear-gradient(96deg, rgb(var(--cyan)), rgb(var(--violet)) 55%, rgb(var(--rose)));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .lede {
+    color: var(--muted);
+    font-size: 16px;
+    max-width: 56ch;
+    margin: 0;
+  }
+
+  /* ---------- hero stage ---------- */
+  .stage {
+    position: relative;
+    display: grid;
+    place-items: center;
+    min-height: 300px;
+    margin: 0 0 72px;
+    border: 1px solid var(--line);
+    border-radius: 24px;
+    background:
+      radial-gradient(600px 300px at 50% 50%, rgba(111, 199, 255, 0.06), transparent 70%),
+      var(--surface);
+    overflow: hidden;
+  }
+
+  .stage::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 48px 48px;
+    mask-image: radial-gradient(circle at 50% 50%, #000 30%, transparent 78%);
+    -webkit-mask-image: radial-gradient(circle at 50% 50%, #000 30%, transparent 78%);
+    pointer-events: none;
+    opacity: 0.5;
+  }
+
+  .stage .lg-btn {
+    position: relative;
+    z-index: 1;
+    font-size: 17px;
+    --lg-pad-x: 30px;
+    --lg-pad-y: 16px;
+    --lg-radius: 16;
+    --lg-glow-size: 220;
+  }
+
+  .hint {
+    position: absolute;
+    bottom: 16px;
+    left: 0; right: 0;
+    text-align: center;
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 0.02em;
+  }
+
+  /* ---------- sections ---------- */
+  section { margin-bottom: 60px; }
+
+  h2 {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0 0 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    align-items: center;
+  }
+
+  .panel {
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 30px;
+    background: var(--surface);
+  }
+
+  .panel--light {
+    background: #f4f5f8;
+    border-color: rgba(0, 0, 0, 0.08);
+  }
+
+  .panel--dark {
+    background: var(--surface-2);
+  }
+
+  .caption {
+    margin-top: 16px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .panel--light .caption { color: #6b7280; }
+
+  code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 12.5px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 2px 6px;
+  }
+
+  .codeblock {
+    margin-top: 18px;
+    padding: 18px 20px;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: #0e1015;
+    overflow-x: auto;
+  }
+
+  .codeblock pre {
+    margin: 0;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 12.5px;
+    line-height: 1.7;
+    color: #cbd3e1;
+  }
+
+  .codeblock .c { color: #5f6b80; }
+  .codeblock .k { color: rgb(var(--violet)); }
+  .codeblock .s { color: rgb(var(--mint)); }
+
+  footer {
+    border-top: 1px solid var(--line);
+    padding-top: 24px;
+    color: var(--muted);
+    font-size: 13px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: space-between;
+  }
+
+  a { color: rgb(var(--cyan)); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow"><span class="pip"></span>LuminaKit</div>
+    <h1>GlowButton — <span class="grad">light that follows</span></h1>
+    <p class="lede">
+      A button whose soft glow and rim highlight track the pointer, with a short
+      trailing lag so the light feels like it has weight. Pure CSS and vanilla JS,
+      no dependencies.
+    </p>
+  </header>
+
+  <div class="stage">
+    <button class="lg-btn" type="button">Move your cursor across me</button>
+    <div class="hint">hover to see the glow follow the pointer</div>
+  </div>
+
+  <section>
+    <h2>Colors</h2>
+    <div class="row" id="colors"></div>
+  </section>
+
+  <section>
+    <h2>Sizes &amp; shapes</h2>
+    <div class="row">
+      <button class="lg-btn" type="button" style="--lg-radius:8">Small radius</button>
+      <button class="lg-btn" type="button" style="--lg-radius:999;--lg-pad-x:26px">Pill</button>
+      <button class="lg-btn" type="button" style="--lg-glow-size:90">Tight glow</button>
+      <button class="lg-btn" type="button" style="--lg-glow-size:320">Wide glow</button>
+      <button class="lg-btn" type="button" style="--lg-glow-alpha:.45">Subtle</button>
+    </div>
+  </section>
+
+  <section>
+    <h2>Surfaces</h2>
+    <div class="row">
+      <div class="panel panel--dark" style="flex:1 1 320px">
+        <div class="row">
+          <button class="lg-btn" type="button" style="--lg-glow:var(--violet)">Dark surface</button>
+        </div>
+        <p class="caption">Glow blends with <code>plus-lighter</code>.</p>
+      </div>
+      <div class="panel panel--light" style="flex:1 1 320px">
+        <div class="row">
+          <button class="lg-btn lg-btn--light" type="button" style="--lg-glow:var(--cyan)">Light surface</button>
+        </div>
+        <p class="caption">Normal blend, softer alpha.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>States</h2>
+    <div class="row">
+      <button class="lg-btn" type="button" style="--lg-glow:var(--mint)">Enabled</button>
+      <button class="lg-btn" type="button" aria-disabled="true">Disabled</button>
+      <button class="lg-btn" type="button" style="--lg-glow:var(--sand)">Click me</button>
+    </div>
+  </section>
+
+  <section>
+    <h2>Usage</h2>
+    <div class="codeblock">
+<pre><span class="c">&lt;!-- 1. stylesheet --&gt;</span>
+&lt;<span class="k">link</span> rel=<span class="s">"stylesheet"</span> href=<span class="s">"glow-button/lumina-glow-button.css"</span>&gt;
+
+<span class="c">&lt;!-- 2. markup --&gt;</span>
+&lt;<span class="k">button</span> class=<span class="s">"lg-btn"</span>&gt;Continue&lt;/<span class="k">button</span>&gt;
+
+<span class="c">&lt;!-- 3. behaviour (auto-initialises every .lg-btn) --&gt;</span>
+&lt;<span class="k">script</span> src=<span class="s">"glow-button/lumina-glow-button.js"</span>&gt;&lt;/<span class="k">script</span>&gt;</pre>
+    </div>
+    <div class="codeblock">
+<pre><span class="c">/* tune it with CSS custom properties */</span>
+.lg-btn {
+  <span class="k">--lg-glow</span>: <span class="s">182 156 255</span>;   <span class="c">/* r g b */</span>
+  <span class="k">--lg-glow-size</span>: <span class="s">200</span>;       <span class="c">/* trailing glow radius, px */</span>
+  <span class="k">--lg-glow-alpha</span>: <span class="s">1</span>;         <span class="c">/* strength */</span>
+  <span class="k">--lg-radius</span>: <span class="s">14</span>;            <span class="c">/* corner radius, px */</span>
+}</pre>
+    </div>
+  </section>
+
+  <footer>
+    <span>LuminaKit · GlowButton</span>
+    <span><a href="../README.md">Documentation</a> · MIT License</span>
+  </footer>
+
+</div>
+
+<script src="glow-button/lumina-glow-button.js"></script>
+<script>
+  // Color swatches, built here so the page stays a single file
+  (function () {
+    var palette = [
+      { name: "Cyan",   rgb: "111 199 255" },
+      { name: "Violet", rgb: "182 156 255" },
+      { name: "Rose",   rgb: "255 158 196" },
+      { name: "Mint",   rgb: "158 245 216" },
+      { name: "Sand",   rgb: "255 214 158" }
+    ];
+    var host = document.getElementById("colors");
+    palette.forEach(function (c) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "lg-btn";
+      b.textContent = c.name;
+      b.style.setProperty("--lg-glow", c.rgb);
+      host.appendChild(b);
+    });
+    // register the freshly created buttons
+    window.LuminaGlowButton.init(host);
+  })();
+</script>
+</body>
+</html>
