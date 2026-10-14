@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LuminaKit — GlassPanel (single file)</title>
+
+<!--
+  LuminaKit · GlassPanel — self-contained demo.
+
+  Two things live in this one file:
+    1. THE COMPONENT   — search for "COMPONENT CSS" and "COMPONENT JS".
+                         Copy those two blocks to reuse the panel anywhere.
+    2. THE DEMO PAGE   — everything else; safe to delete.
+
+  How it works
+  ------------
+  One class carries the material. It is layered like real glass rather than a
+  single translucent fill:
+
+    .lg-panel            backdrop-filter: blur + saturate + brightness, the tint,
+                         the outer hairline, and the layered elevation shadows
+    .lg-panel::before    the refracted rim — a band just inside the edge that
+                         blurs the backdrop harder and lifts it, masked down to a
+                         ring. This is what makes the sheet read as thick glass
+                         instead of a flat wash. Disable with --lgp-edge: 0.
+    .lg-panel::after     fine grain, so large smooth areas do not band
+    .lg-panel__sheen     optional specular highlight that follows the pointer
+                         (only with .lg-panel--sheen; injected by the JS)
+
+  Public CSS custom properties (set on .lg-panel or any ancestor):
+    --lgp-blur        backdrop blur radius, px          default 30
+    --lgp-saturate    backdrop saturation, %            default 180
+    --lgp-brightness  backdrop brightness, %            default 108
+    --lgp-bg          tint of the glass                 default rgba(26,28,36,.46)
+    --lgp-fg          text color                        default #f2f4f8
+    --lgp-radius      corner radius, px                 default 22
+    --lgp-edge        width of the refracted rim, px    default 14 (0 disables)
+    --lgp-border      outer hairline color              default rgba(255,255,255,.15)
+    --lgp-shadow      cast-shadow color                 default rgba(0,0,0,.5)
+    --lgp-grain       grain opacity, 0 disables it      default .16
+    --lgp-pad         inner padding                     default 20px
+
+  Variants: .lg-panel--thin  .lg-panel--thick
+            .lg-panel--light
+            .lg-panel--sheen   (needs the JS)
+
+  Gotchas worth keeping (all were real problems):
+    * backdrop-filter only shows what is painted *behind* the element, so a
+      panel needs a real backdrop to sit over — over a flat fill it looks like
+      a plain translucent box.
+    * the overlaid pseudo-elements need explicit z-index values; content sits at
+      z-index 4 via .lg-panel > *:not(.lg-panel__sheen) so the sheen keeps its
+      own layer.
+    * on its own the panel is pure CSS. The JS only adds the pointer sheen, and
+      it self-initialises, so loading the script is always safe.
+-->
+
+<style>
+/* ============================================================
+   COMPONENT CSS  (lumina-glass-panel.css)
+   ============================================================ */
+.lg-panel {
+  --lgp-blur: 30;
+  --lgp-saturate: 180;
+  --lgp-brightness: 108;
+  --lgp-bg: rgba(26, 28, 36, 0.46);
+  --lgp-fg: #f2f4f8;
+  --lgp-radius: 22;
+  --lgp-edge: 14;
+  --lgp-border: rgba(255, 255, 255, 0.15);
+  --lgp-shadow: rgba(0, 0, 0, 0.5);
+  --lgp-grain: 0.16;
+  --lgp-pad: 20px;
+
+  --lgp-sheen-size: 420;
+
+  /* live pointer position for the sheen, written by JS */
+  --lgp-px: 50%;
+  --lgp-py: 0%;
+  --lgp-sheen: 0;
+
+  position: relative;
+  isolation: isolate;
+  padding: var(--lgp-pad);
+  border-radius: calc(var(--lgp-radius) * 1px);
+  color: var(--lgp-fg);
+
+  /* the material */
+  background: var(--lgp-bg);
+  -webkit-backdrop-filter: blur(calc(var(--lgp-blur) * 1px))
+    saturate(calc(var(--lgp-saturate) * 1%))
+    brightness(calc(var(--lgp-brightness) * 1%));
+  backdrop-filter: blur(calc(var(--lgp-blur) * 1px))
+    saturate(calc(var(--lgp-saturate) * 1%))
+    brightness(calc(var(--lgp-brightness) * 1%));
+
+  /* outer hairline + top specular + bottom shade + layered elevation */
+  box-shadow:
+    inset 0 0 0 1px var(--lgp-border),
+    inset 0 1px 0 0 rgb(255 255 255 / 0.14),
+    inset 0 -1px 0 0 rgb(0 0 0 / 0.10),
+    0 1px 1px -0.5px rgb(0 0 0 / 0.3),
+    0 14px 30px -12px var(--lgp-shadow),
+    0 36px 70px -36px var(--lgp-shadow);
+}
+
+/* ---- 1. refracted rim -------------------------------------------------------
+ * A band just inside the edge that blurs the backdrop harder and lifts it.
+ * This is what makes the sheet read as thick glass instead of a flat tint.
+ * ------------------------------------------------------------------------- */
+.lg-panel::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  z-index: 2;
+  border-radius: calc((var(--lgp-radius) - 1) * 1px);
+  padding: calc(var(--lgp-edge) * 1px);
+  background: linear-gradient(
+    145deg,
+    rgb(255 255 255 / 0.26),
+    rgb(255 255 255 / 0.05) 32%,
+    rgb(255 255 255 / 0.02) 58%,
+    rgb(255 255 255 / 0.09)
+  );
+  -webkit-backdrop-filter: blur(calc(var(--lgp-blur) * 0.42px))
+    saturate(calc(var(--lgp-saturate) * 0.8%)) brightness(116%);
+  backdrop-filter: blur(calc(var(--lgp-blur) * 0.42px))
+    saturate(calc(var(--lgp-saturate) * 0.8%)) brightness(116%);
+  /* keep only the band — the interior is masked out */
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* ---- 2. grain ---------------------------------------------------------------
+ * Dithers the large smooth area so the blur does not band on wide gradients.
+ * ------------------------------------------------------------------------- */
+.lg-panel::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+  opacity: var(--lgp-grain);
+  mix-blend-mode: overlay;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 140px 140px;
+}
+
+/* ---- 3. optional pointer sheen ---- */
+.lg-panel--sheen {
+  overflow: hidden;
+}
+
+.lg-panel--sheen > .lg-panel__sheen {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  border-radius: inherit;
+  opacity: var(--lgp-sheen);
+  transition: opacity 0.35s ease;
+  pointer-events: none;
+  background: radial-gradient(
+    calc(var(--lgp-sheen-size) * 1px) circle at var(--lgp-px) var(--lgp-py),
+    rgb(255 255 255 / 0.16),
+    rgb(255 255 255 / 0.06) 42%,
+    transparent 72%
+  );
+}
+
+/* content rides above every overlay */
+.lg-panel > *:not(.lg-panel__sheen) {
+  position: relative;
+  z-index: 4;
+}
+
+/* ---- thickness weights ---- */
+.lg-panel--thin {
+  --lgp-blur: 14;
+  --lgp-saturate: 150;
+  --lgp-bg: rgba(26, 28, 36, 0.30);
+  --lgp-grain: 0.10;
+  --lgp-edge: 10;
+}
+
+.lg-panel--thick {
+  --lgp-blur: 46;
+  --lgp-saturate: 210;
+  --lgp-bg: rgba(26, 28, 36, 0.60);
+  --lgp-grain: 0.22;
+  --lgp-edge: 18;
+}
+
+/* ---- light surfaces ---- */
+.lg-panel--light {
+  --lgp-bg: rgba(255, 255, 255, 0.55);
+  --lgp-fg: #14161a;
+  --lgp-border: rgba(255, 255, 255, 0.75);
+  --lgp-shadow: rgba(18, 22, 34, 0.2);
+  --lgp-brightness: 104;
+  --lgp-grain: 0.08;
+}
+
+.lg-panel--light::before {
+  background: linear-gradient(
+    145deg,
+    rgb(255 255 255 / 0.75),
+    rgb(255 255 255 / 0.22) 30%,
+    rgb(255 255 255 / 0.06) 58%,
+    rgb(255 255 255 / 0.34)
+  );
+}
+
+.lg-panel--light::after {
+  mix-blend-mode: soft-light;
+}
+
+.lg-panel--light > .lg-panel__sheen {
+  background: radial-gradient(
+    calc(var(--lgp-sheen-size) * 1px) circle at var(--lgp-px) var(--lgp-py),
+    rgb(255 255 255 / 0.55),
+    rgb(255 255 255 / 0.2) 42%,
+    transparent 72%
+  );
+}
+
+/* ---- no backdrop-filter: fall back to an opaque surface, not a washed-out one -- */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .lg-panel {
+    background: rgba(22, 24, 31, 0.95);
+  }
+  .lg-panel--thin {
+    background: rgba(22, 24, 31, 0.9);
+  }
+  .lg-panel--light {
+    background: rgba(249, 250, 252, 0.97);
+  }
+  .lg-panel::before {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background: linear-gradient(
+      145deg,
+      rgb(255 255 255 / 0.12),
+      rgb(255 255 255 / 0.02) 55%,
+      rgb(255 255 255 / 0.06)
+    );
+  }
+  .lg-panel--light::before {
+    background: linear-gradient(
+      145deg,
+      rgb(255 255 255 / 0.5),
+      rgb(255 255 255 / 0.1) 55%,
+      rgb(255 255 255 / 0.25)
+    );
+  }
+}
+
+/* Accessibility: macOS exposes "Reduce transparency". Honour it by dropping the
+   blur entirely rather than shipping an unreadable sheet. */
+@media (prefers-reduced-transparency: reduce) {
+  .lg-panel {
+    background: rgba(22, 24, 31, 0.94);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  .lg-panel--thin {
+    background: rgba(22, 24, 31, 0.9);
+  }
+  .lg-panel--light {
+    background: rgba(249, 250, 252, 0.97);
+  }
+  .lg-panel::before {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  .lg-panel--sheen {
+    overflow: visible;
+  }
+  .lg-panel--sheen > .lg-panel__sheen {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lg-panel--sheen > .lg-panel__sheen {
+    transition-duration: 0.01ms;
+  }
+}
+/* ============================================================
+   END COMPONENT CSS
+   ============================================================ */
+
+/* ---------- demo page styling (not part of the component) ---------- */
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background:
+    radial-gradient(1100px 620px at 50% -12%, rgba(111,199,255,.10), transparent 62%),
+    radial-gradient(900px 520px at 82% 8%, rgba(182,156,255,.07), transparent 60%),
+    #0a0b0f;
+  color: #f2f4f8;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+    "Hiragino Sans GB", "Microsoft YaHei", Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  line-height: 1.55;
+  min-height: 100vh;
+}
+.wrap { max-width: 980px; margin: 0 auto; padding: 64px 28px 88px; }
+
+.eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 12px; letter-spacing: .14em; text-transform: uppercase;
+  color: #8d95a6; margin-bottom: 16px;
+}
+.eyebrow .pip {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: rgb(111 199 255); box-shadow: 0 0 12px rgb(111 199 255 / .9);
+}
+h1 {
+  font-size: clamp(28px, 5vw, 42px); line-height: 1.1;
+  letter-spacing: -.03em; font-weight: 640; margin: 0 0 12px;
+}
+h1 .grad {
+  background: linear-gradient(96deg, rgb(111 199 255), rgb(182 156 255) 55%, rgb(255 158 196));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.lede { color: #8d95a6; font-size: 15px; max-width: 62ch; margin: 0 0 40px; }
+
+h2 {
+  font-size: 13px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase;
+  color: #8d95a6; margin: 0 0 18px; padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+section { margin-bottom: 48px; }
+
+/* the backdrop the glass sits over: big colour fields plus fine detail.
+   The fine detail is what actually makes a blur legible. */
+.stage {
+  position: relative;
+  border-radius: 26px;
+  padding: 48px 36px;
+  overflow: hidden;
+  margin-bottom: 48px;
+  isolation: isolate;
+}
+.stage .wall {
+  position: absolute; inset: 0; pointer-events: none;
+  background:
+    radial-gradient(540px 440px at 12% 16%, rgb(111 199 255 / .9), transparent 62%),
+    radial-gradient(600px 500px at 44% 6%, rgb(182 156 255 / .85), transparent 64%),
+    radial-gradient(500px 440px at 86% 20%, rgb(255 158 196 / .85), transparent 62%),
+    radial-gradient(620px 520px at 20% 96%, rgb(158 245 216 / .75), transparent 64%),
+    radial-gradient(580px 480px at 80% 92%, rgb(255 214 158 / .8), transparent 64%),
+    linear-gradient(158deg, #0f1526, #1b1030 46%, #2a1226);
+}
+.stage .detail {
+  position: absolute; inset: 0; pointer-events: none; opacity: .55;
+  background-image:
+    linear-gradient(rgba(255,255,255,.22) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.22) 1px, transparent 1px);
+  background-size: 22px 22px;
+  -webkit-mask-image: radial-gradient(ellipse at 50% 50%, #000 25%, transparent 88%);
+  mask-image: radial-gradient(ellipse at 50% 50%, #000 25%, transparent 88%);
+}
+.stage--light { background: #eef1f6; }
+.stage--light .wall {
+  background:
+    radial-gradient(540px 440px at 10% 14%, rgb(111 199 255 / .55), transparent 64%),
+    radial-gradient(600px 500px at 46% 4%, rgb(182 156 255 / .5), transparent 66%),
+    radial-gradient(500px 440px at 88% 22%, rgb(255 158 196 / .55), transparent 64%),
+    radial-gradient(620px 520px at 18% 98%, rgb(158 245 216 / .5), transparent 66%),
+    radial-gradient(580px 480px at 82% 94%, rgb(255 214 158 / .55), transparent 66%),
+    linear-gradient(158deg, #f3f6fb, #eef0f8 50%, #f7f1f6);
+}
+.stage--light .detail {
+  opacity: .5;
+  background-image:
+    linear-gradient(rgba(20,22,26,.16) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(20,22,26,.16) 1px, transparent 1px);
+}
+.stage .caption {
+  position: absolute; left: 22px; bottom: 18px; pointer-events: none;
+  font-size: 11px; letter-spacing: .16em; text-transform: uppercase;
+  color: rgba(255,255,255,.72);
+}
+.stage--light .caption { color: rgba(20,22,26,.5); }
+
+.panels {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 22px;
+}
+.panel-grid {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 18px;
+}
+.lg-panel h3 { margin: 0 0 6px; font-size: 16px; font-weight: 620; letter-spacing: -.01em; }
+.lg-panel p { margin: 0; font-size: 13.5px; opacity: .78; line-height: 1.5; }
+.lg-panel .meta {
+  margin-top: 14px; font-size: 11.5px; letter-spacing: .08em;
+  text-transform: uppercase; opacity: .55;
+}
+.lg-panel code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px; background: rgba(255,255,255,.08);
+  border-radius: 6px; padding: 2px 6px;
+}
+footer {
+  border-top: 1px solid rgba(255,255,255,.08); padding-top: 22px;
+  color: #8d95a6; font-size: 13px;
+  display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between;
+}
+a { color: rgb(111 199 255); text-decoration: none; }
+a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow"><span class="pip"></span>LuminaKit</div>
+    <h1>Frosted glass, <span class="grad">in plain CSS</span></h1>
+    <p class="lede">
+      A frosted panel in the spirit of Apple's materials: heavy backdrop blur
+      with a saturation boost, a refracted band along the rim, a crisp specular
+      hairline, fine grain so large areas do not band, and layered elevation.
+      One class, no dependencies — the script is only for the pointer sheen.
+    </p>
+  </header>
+
+  <section>
+    <h2>Thickness</h2>
+    <div class="stage">
+      <div class="wall"></div>
+      <div class="detail"></div>
+      <div class="panels">
+        <div class="lg-panel lg-panel--thin">
+          <h3>Thin</h3>
+          <p>Light blur, most transparent. Good for chrome that should stay out of the way.</p>
+          <div class="meta">blur 14 · sat 150 · rim 10</div>
+        </div>
+        <div class="lg-panel">
+          <h3>Regular</h3>
+          <p>The default weight. Reads clearly against busy colour while staying light.</p>
+          <div class="meta">blur 30 · sat 180 · rim 14</div>
+        </div>
+        <div class="lg-panel lg-panel--thick lg-panel--sheen">
+          <h3>Thick + sheen</h3>
+          <p>Heaviest blur, plus a specular highlight that follows the cursor.</p>
+          <div class="meta">blur 46 · sat 210 · rim 18</div>
+        </div>
+      </div>
+      <div class="caption">dark backdrop · over fine detail</div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Light backdrop</h2>
+    <div class="stage stage--light">
+      <div class="wall"></div>
+      <div class="detail"></div>
+      <div class="panels">
+        <div class="lg-panel lg-panel--light">
+          <h3>Light regular</h3>
+          <p>For light surfaces: a brighter specular edge, a softer cast shadow, dark ink.</p>
+          <div class="meta">blur 30 · light</div>
+        </div>
+        <div class="lg-panel lg-panel--light lg-panel--thin">
+          <h3>Light thin</h3>
+          <p>The same material at the thin weight.</p>
+          <div class="meta">blur 14 · light</div>
+        </div>
+      </div>
+      <div class="caption">light backdrop</div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Radius · rim · grain</h2>
+    <div class="stage" style="padding:40px 32px">
+      <div class="wall"></div>
+      <div class="detail"></div>
+      <div class="panel-grid">
+        <div class="lg-panel" style="--lgp-radius:8">
+          <h3>Small radius</h3>
+          <p><code>--lgp-radius: 8</code></p>
+        </div>
+        <div class="lg-panel" style="--lgp-radius:999">
+          <h3>Pill</h3>
+          <p><code>--lgp-radius: 999</code></p>
+        </div>
+        <div class="lg-panel" style="--lgp-edge:0">
+          <h3>Flat rim</h3>
+          <p><code>--lgp-edge: 0</code></p>
+        </div>
+        <div class="lg-panel" style="--lgp-edge:34">
+          <h3>Thick rim</h3>
+          <p><code>--lgp-edge: 34</code></p>
+        </div>
+        <div class="lg-panel" style="--lgp-grain:0">
+          <h3>No grain</h3>
+          <p><code>--lgp-grain: 0</code></p>
+        </div>
+        <div class="lg-panel" style="--lgp-grain:.7">
+          <h3>Heavy grain</h3>
+          <p><code>--lgp-grain: .7</code></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Usage</h2>
+    <div class="stage" style="padding:28px 32px">
+      <div class="wall"></div>
+      <div class="detail"></div>
+      <div class="lg-panel" style="max-width:520px;margin:0 auto">
+        <h3>Just a div</h3>
+        <p>
+          Paste the two component blocks from this file, then use
+          <code>&lt;div class="lg-panel"&gt;</code>. Add
+          <code>--thin</code> / <code>--thick</code> for other weights,
+          <code>--light</code> on light surfaces, and <code>--sheen</code> for the
+          pointer highlight.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <span>LuminaKit · GlassPanel</span>
+    <span><a href="https://github.com/chen123aaa/LuminaKit">Repository</a> · MIT License</span>
+  </footer>
+
+</div>
+
+<script>
+/* ============================================================
+   COMPONENT JS  (lumina-glass-panel.js)
+   ============================================================ */
+/*!
+ * LuminaKit — GlassPanel (optional enhancement)
+ * Adds a pointer-following specular sheen to .lg-panel--sheen.
+ *
+ * The panel works without this file — it is only needed if you want the sheen.
+ * Elements without the --sheen class are ignored.
+ *
+ * Usage: add .lg-panel--sheen to a .lg-panel and include this script once.
+ */
+
+(function (global) {
+  "use strict";
+
+  var SELECTOR = ".lg-panel--sheen";
+  var EASE = 0.14;
+
+  var states = new Map();
+  var rafId = null;
+
+  function attach(el) {
+    if (states.has(el)) return;
+
+    if (!el.querySelector(":scope > .lg-panel__sheen")) {
+      var layer = document.createElement("span");
+      layer.className = "lg-panel__sheen";
+      layer.setAttribute("aria-hidden", "true");
+      el.appendChild(layer);
+    }
+
+    var rect = el.getBoundingClientRect();
+    var state = {
+      el: el,
+      targetX: rect.width / 2,
+      targetY: rect.height / 2,
+      x: rect.width / 2,
+      y: rect.height / 2,
+      hovering: false
+    };
+    states.set(el, state);
+
+    function read(event) {
+      var r = el.getBoundingClientRect();
+      return { x: event.clientX - r.left, y: event.clientY - r.top };
+    }
+
+    el.addEventListener("pointerenter", function (event) {
+      var p = read(event);
+      if (!state.hovering) {
+        state.x = p.x;
+        state.y = p.y;
+      }
+      state.targetX = p.x;
+      state.targetY = p.y;
+      state.hovering = true;
+      kick();
+    });
+
+    el.addEventListener("pointermove", function (event) {
+      var p = read(event);
+      state.targetX = p.x;
+      state.targetY = p.y;
+      kick();
+    });
+
+    el.addEventListener("pointerleave", function () {
+      state.hovering = false;
+      var r = el.getBoundingClientRect();
+      state.targetX = r.width / 2;
+      state.targetY = r.height / 2;
+      kick();
+    });
+  }
+
+  function detach(el) {
+    states.delete(el);
+  }
+
+  function kick() {
+    if (rafId !== null) return;
+    rafId = requestAnimationFrame(tick);
+  }
+
+  function tick() {
+    rafId = null;
+    var busy = false;
+
+    states.forEach(function (state) {
+      var dx = state.targetX - state.x;
+      var dy = state.targetY - state.y;
+
+      if (Math.abs(dx) < 0.1 && Math.abs(dy) < 0.1) {
+        state.x = state.targetX;
+        state.y = state.targetY;
+      } else {
+        state.x += dx * EASE;
+        state.y += dy * EASE;
+        busy = true;
+      }
+
+      state.el.style.setProperty("--lgp-px", state.x.toFixed(1) + "px");
+      state.el.style.setProperty("--lgp-py", state.y.toFixed(1) + "px");
+      state.el.style.setProperty("--lgp-sheen", state.hovering ? "1" : "0");
+    });
+
+    if (busy) rafId = requestAnimationFrame(tick);
+  }
+
+  function init(root) {
+    var scope = root || document;
+    var nodes = scope.querySelectorAll(SELECTOR);
+    for (var i = 0; i < nodes.length; i++) attach(nodes[i]);
+    return nodes.length;
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", function () {
+      init();
+    });
+  } else {
+    init();
+  }
+
+  global.LuminaGlassPanel = { init: init, attach: attach, detach: detach };
+})(window);
+/* ============================================================
+   END COMPONENT JS
+   ============================================================ */
+</script>
+</body>
+</html>

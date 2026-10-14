@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>LuminaKit — GlowButton</title>
+<title>LuminaKit — components</title>
 <link rel="stylesheet" href="glow-button/lumina-glow-button.css">
+<link rel="stylesheet" href="glass-panel/lumina-glass-panel.css">
 <style>
   :root {
     --bg: #0a0b0f;
     --surface: #14161c;
-    --surface-2: #1b1e26;
     --ink: #f2f4f8;
     --muted: #8d95a6;
     --line: rgba(255, 255, 255, 0.08);
@@ -20,8 +20,7 @@
     --sand: 255 214 158;
   }
 
-  * { box-sizing: border-box; }
-
+  *, *::before, *::after { box-sizing: border-box; }
   html, body { margin: 0; }
 
   body {
@@ -37,190 +36,190 @@
     min-height: 100vh;
   }
 
-  .wrap {
-    max-width: 1000px;
-    margin: 0 auto;
-    padding: 72px 28px 96px;
-  }
+  .wrap { max-width: 1000px; margin: 0 auto; padding: 72px 28px 96px; }
 
   header { margin-bottom: 56px; }
 
   .eyebrow {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 12px;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 18px;
+    display: inline-flex; align-items: center; gap: 8px;
+    font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 18px;
   }
-
   .eyebrow .pip {
     width: 6px; height: 6px; border-radius: 50%;
-    background: rgb(var(--cyan));
-    box-shadow: 0 0 12px rgb(var(--cyan) / 0.9);
+    background: rgb(var(--cyan)); box-shadow: 0 0 12px rgb(var(--cyan) / 0.9);
   }
 
   h1 {
-    font-size: clamp(30px, 5vw, 46px);
-    line-height: 1.1;
-    letter-spacing: -0.03em;
-    font-weight: 640;
-    margin: 0 0 14px;
+    font-size: clamp(30px, 5vw, 46px); line-height: 1.1;
+    letter-spacing: -0.03em; font-weight: 640; margin: 0 0 14px;
   }
-
   h1 .grad {
     background: linear-gradient(96deg, rgb(var(--cyan)), rgb(var(--violet)) 55%, rgb(var(--rose)));
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
+    -webkit-background-clip: text; background-clip: text; color: transparent;
   }
 
-  .lede {
-    color: var(--muted);
-    font-size: 16px;
-    max-width: 56ch;
-    margin: 0;
+  .lede { color: var(--muted); font-size: 16px; max-width: 60ch; margin: 0; }
+
+  /* component section headings */
+  .comp { margin-bottom: 76px; }
+  .comp > h2 {
+    display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap;
+    font-size: 24px; font-weight: 620; letter-spacing: -0.02em;
+    margin: 0 0 8px; padding: 0; border: 0; text-transform: none; color: var(--ink);
+  }
+  .comp > h2 .tag {
+    font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--muted); border: 1px solid var(--line); border-radius: 999px;
+    padding: 3px 10px; font-weight: 600;
+  }
+  .comp > .sub { color: var(--muted); font-size: 14px; margin: 0 0 24px; max-width: 62ch; }
+
+  h3 {
+    font-size: 12px; font-weight: 600; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--muted);
+    margin: 0 0 16px; padding-bottom: 10px; border-bottom: 1px solid var(--line);
   }
 
-  /* ---------- hero stage ---------- */
+  .row { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; }
+
   .stage {
-    position: relative;
-    display: grid;
-    place-items: center;
-    min-height: 300px;
-    margin: 0 0 72px;
-    border: 1px solid var(--line);
-    border-radius: 24px;
+    position: relative; display: grid; place-items: center; min-height: 280px;
+    margin-bottom: 40px; border: 1px solid var(--line); border-radius: 24px;
     background:
       radial-gradient(600px 300px at 50% 50%, rgba(111, 199, 255, 0.06), transparent 70%),
       var(--surface);
     overflow: hidden;
   }
-
   .stage::after {
-    content: "";
-    position: absolute;
-    inset: 0;
+    content: ""; position: absolute; inset: 0;
     background-image:
       linear-gradient(var(--line) 1px, transparent 1px),
       linear-gradient(90deg, var(--line) 1px, transparent 1px);
     background-size: 48px 48px;
     mask-image: radial-gradient(circle at 50% 50%, #000 30%, transparent 78%);
     -webkit-mask-image: radial-gradient(circle at 50% 50%, #000 30%, transparent 78%);
-    pointer-events: none;
-    opacity: 0.5;
+    pointer-events: none; opacity: 0.5;
   }
-
   .stage .lg-btn {
-    position: relative;
-    z-index: 1;
-    font-size: 17px;
-    --lg-pad-x: 30px;
-    --lg-pad-y: 16px;
-    --lg-radius: 16;
-    --lg-glow-size: 220;
+    position: relative; z-index: 1; font-size: 17px;
+    --lg-pad-x: 30px; --lg-pad-y: 16px; --lg-radius: 16; --lg-glow-size: 220;
   }
-
   .hint {
-    position: absolute;
-    bottom: 16px;
-    left: 0; right: 0;
-    text-align: center;
-    font-size: 12px;
-    color: var(--muted);
-    letter-spacing: 0.02em;
+    position: absolute; bottom: 16px; left: 0; right: 0; text-align: center;
+    font-size: 12px; color: var(--muted);
   }
 
-  /* ---------- sections ---------- */
-  section { margin-bottom: 60px; }
+  section { margin-bottom: 44px; }
 
-  h2 {
-    font-size: 13px;
-    font-weight: 600;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin: 0 0 20px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid var(--line);
-  }
-
-  .row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 14px;
-    align-items: center;
-  }
-
-  .panel {
+  /* ---------- glass stage: a vivid, detailed backdrop so the blur reads ---------- */
+  .glass-stage {
+    position: relative;
     border: 1px solid var(--line);
-    border-radius: 20px;
-    padding: 30px;
-    background: var(--surface);
+    border-radius: 26px;
+    padding: 48px 36px;
+    overflow: hidden;
+    margin-bottom: 40px;
+    background: #0b0d13;
+    isolation: isolate;
+  }
+  /* big colour fields */
+  .glass-stage .wall {
+    position: absolute; inset: 0; pointer-events: none;
+    background:
+      radial-gradient(540px 440px at 12% 16%, rgb(var(--cyan) / 0.9), transparent 62%),
+      radial-gradient(600px 500px at 44% 6%, rgb(var(--violet) / 0.85), transparent 64%),
+      radial-gradient(500px 440px at 86% 20%, rgb(var(--rose) / 0.85), transparent 62%),
+      radial-gradient(620px 520px at 20% 96%, rgb(var(--mint) / 0.75), transparent 64%),
+      radial-gradient(580px 480px at 80% 92%, rgb(var(--sand) / 0.8), transparent 64%),
+      linear-gradient(158deg, #0f1526, #1b1030 46%, #2a1226);
+  }
+  /* fine high-frequency detail is what actually makes a blur legible */
+  .glass-stage .detail {
+    position: absolute; inset: 0; pointer-events: none; opacity: 0.55;
+    background-image:
+      linear-gradient(rgba(255,255,255,.22) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,.22) 1px, transparent 1px);
+    background-size: 22px 22px;
+    -webkit-mask-image: radial-gradient(ellipse at 50% 50%, #000 25%, transparent 88%);
+    mask-image: radial-gradient(ellipse at 50% 50%, #000 25%, transparent 88%);
+  }
+  .glass-stage .caption {
+    position: absolute; left: 22px; bottom: 18px;
+    font-size: 11px; letter-spacing: 0.16em; text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.72); pointer-events: none;
+  }
+  .glass-stage--light { background: #eef1f6; }
+  .glass-stage--light .wall {
+    background:
+      radial-gradient(540px 440px at 10% 14%, rgb(var(--cyan) / 0.55), transparent 64%),
+      radial-gradient(600px 500px at 46% 4%, rgb(var(--violet) / 0.5), transparent 66%),
+      radial-gradient(500px 440px at 88% 22%, rgb(var(--rose) / 0.55), transparent 64%),
+      radial-gradient(620px 520px at 18% 98%, rgb(var(--mint) / 0.5), transparent 66%),
+      radial-gradient(580px 480px at 82% 94%, rgb(var(--sand) / 0.55), transparent 66%),
+      linear-gradient(158deg, #f3f6fb, #eef0f8 50%, #f7f1f6);
+  }
+  .glass-stage--light .detail {
+    opacity: 0.5;
+    background-image:
+      linear-gradient(rgba(20,22,26,.16) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(20,22,26,.16) 1px, transparent 1px);
+  }
+  .glass-stage--light .caption { color: rgba(20, 22, 26, 0.5); }
+
+  .glass-stage .panels {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 22px;
   }
 
-  .panel--light {
-    background: #f4f5f8;
-    border-color: rgba(0, 0, 0, 0.08);
+  .lg-panel h4 {
+    margin: 0 0 6px; font-size: 16px; font-weight: 620; letter-spacing: -0.01em;
+  }
+  .lg-panel p { margin: 0; font-size: 13.5px; opacity: 0.78; line-height: 1.5; }
+  .lg-panel .meta {
+    margin-top: 14px; font-size: 11.5px; letter-spacing: 0.08em;
+    text-transform: uppercase; opacity: 0.55;
   }
 
-  .panel--dark {
-    background: var(--surface-2);
+  .panel-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 18px;
   }
-
-  .caption {
-    margin-top: 16px;
-    font-size: 13px;
-    color: var(--muted);
-  }
-
-  .panel--light .caption { color: #6b7280; }
 
   code {
     font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-    font-size: 12.5px;
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid var(--line);
-    border-radius: 6px;
-    padding: 2px 6px;
+    font-size: 12.5px; background: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--line); border-radius: 6px; padding: 2px 6px;
   }
 
   .codeblock {
-    margin-top: 18px;
-    padding: 18px 20px;
-    border: 1px solid var(--line);
-    border-radius: 16px;
-    background: #0e1015;
-    overflow-x: auto;
+    margin-top: 18px; padding: 18px 20px; border: 1px solid var(--line);
+    border-radius: 16px; background: #0e1015; overflow-x: auto;
   }
-
   .codeblock pre {
-    margin: 0;
-    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-    font-size: 12.5px;
-    line-height: 1.7;
-    color: #cbd3e1;
+    margin: 0; font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 12.5px; line-height: 1.7; color: #cbd3e1;
   }
-
   .codeblock .c { color: #5f6b80; }
   .codeblock .k { color: rgb(var(--violet)); }
   .codeblock .s { color: rgb(var(--mint)); }
 
   footer {
-    border-top: 1px solid var(--line);
-    padding-top: 24px;
-    color: var(--muted);
-    font-size: 13px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    justify-content: space-between;
+    border-top: 1px solid var(--line); padding-top: 24px;
+    color: var(--muted); font-size: 13px;
+    display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between;
   }
 
   a { color: rgb(var(--cyan)); text-decoration: none; }
   a:hover { text-decoration: underline; }
+
+  @media (max-width: 620px) {
+    .wrap { padding: 48px 18px 72px; }
+    .glass-stage { padding: 32px 20px; }
+  }
 </style>
 </head>
 <body>
@@ -228,95 +227,189 @@
 
   <header>
     <div class="eyebrow"><span class="pip"></span>LuminaKit</div>
-    <h1>GlowButton — <span class="grad">light that follows</span></h1>
+    <h1>Premium soft UI, <span class="grad">in plain HTML</span></h1>
     <p class="lede">
-      A button whose soft glow and rim highlight track the pointer, with a short
-      trailing lag so the light feels like it has weight. Pure CSS and vanilla JS,
-      no dependencies.
+      Small, dependency-free components with a soft, high-key look.
+      Each one is a single CSS file — JavaScript is optional.
     </p>
   </header>
 
-  <div class="stage">
-    <button class="lg-btn" type="button">Move your cursor across me</button>
-    <div class="hint">hover to see the glow follow the pointer</div>
+  <!-- ================= GlowButton ================= -->
+  <div class="comp">
+    <h2>GlowButton <span class="tag">Web</span></h2>
+    <p class="sub">
+      A button whose soft glow and rim highlight track the pointer, with a short
+      trailing lag so the light feels like it has weight.
+    </p>
+
+    <div class="stage">
+      <button class="lg-btn" type="button">Move your cursor across me</button>
+      <div class="hint">hover to see the glow follow the pointer</div>
+    </div>
+
+    <section>
+      <h3>Colors</h3>
+      <div class="row" id="colors"></div>
+    </section>
+
+    <section>
+      <h3>Sizes &amp; shapes</h3>
+      <div class="row">
+        <button class="lg-btn" type="button" style="--lg-radius:8">Small radius</button>
+        <button class="lg-btn" type="button" style="--lg-radius:999;--lg-pad-x:26px">Pill</button>
+        <button class="lg-btn" type="button" style="--lg-glow-size:90">Tight glow</button>
+        <button class="lg-btn" type="button" style="--lg-glow-size:320">Wide glow</button>
+        <button class="lg-btn" type="button" style="--lg-glow-alpha:.45">Subtle</button>
+      </div>
+    </section>
+
+    <section>
+      <h3>Surfaces &amp; states</h3>
+      <div class="row">
+        <button class="lg-btn" type="button" style="--lg-glow:var(--violet)">Dark</button>
+        <button class="lg-btn lg-btn--light" type="button" style="--lg-glow:var(--cyan)">Light</button>
+        <button class="lg-btn" type="button" style="--lg-glow:var(--mint)">Enabled</button>
+        <button class="lg-btn" type="button" aria-disabled="true">Disabled</button>
+      </div>
+    </section>
   </div>
 
-  <section>
-    <h2>Colors</h2>
-    <div class="row" id="colors"></div>
-  </section>
+  <!-- ================= GlassPanel ================= -->
+  <div class="comp">
+    <h2>GlassPanel <span class="tag">Web</span></h2>
+    <p class="sub">
+      Frosted glass in the spirit of Apple's materials — a heavy backdrop blur
+      with a saturation boost, a refracted band along the rim, a crisp specular
+      hairline, fine grain so large areas do not band, and layered elevation.
+      Pure CSS; only the sheen layer needs the script.
+    </p>
 
-  <section>
-    <h2>Sizes &amp; shapes</h2>
-    <div class="row">
-      <button class="lg-btn" type="button" style="--lg-radius:8">Small radius</button>
-      <button class="lg-btn" type="button" style="--lg-radius:999;--lg-pad-x:26px">Pill</button>
-      <button class="lg-btn" type="button" style="--lg-glow-size:90">Tight glow</button>
-      <button class="lg-btn" type="button" style="--lg-glow-size:320">Wide glow</button>
-      <button class="lg-btn" type="button" style="--lg-glow-alpha:.45">Subtle</button>
-    </div>
-  </section>
-
-  <section>
-    <h2>Surfaces</h2>
-    <div class="row">
-      <div class="panel panel--dark" style="flex:1 1 320px">
-        <div class="row">
-          <button class="lg-btn" type="button" style="--lg-glow:var(--violet)">Dark surface</button>
+    <div class="glass-stage">
+      <div class="wall"></div>
+      <div class="detail"></div>
+      <div class="panels">
+        <div class="lg-panel lg-panel--thin">
+          <h4>Thin</h4>
+          <p>Light blur, most transparent. Good for chrome that should stay out of the way.</p>
+          <div class="meta">blur 14 · sat 150 · rim 10</div>
         </div>
-        <p class="caption">Glow blends with <code>plus-lighter</code>.</p>
-      </div>
-      <div class="panel panel--light" style="flex:1 1 320px">
-        <div class="row">
-          <button class="lg-btn lg-btn--light" type="button" style="--lg-glow:var(--cyan)">Light surface</button>
+        <div class="lg-panel">
+          <h4>Regular</h4>
+          <p>The default weight. Reads clearly against busy colour while staying light.</p>
+          <div class="meta">blur 30 · sat 180 · rim 14</div>
         </div>
-        <p class="caption">Normal blend, softer alpha.</p>
+        <div class="lg-panel lg-panel--thick lg-panel--sheen">
+          <h4>Thick + sheen</h4>
+          <p>Heaviest blur, plus a specular highlight that follows the cursor.</p>
+          <div class="meta">blur 46 · sat 210 · rim 18</div>
+        </div>
       </div>
+      <div class="caption">dark backdrop · over fine detail</div>
     </div>
-  </section>
 
-  <section>
-    <h2>States</h2>
-    <div class="row">
-      <button class="lg-btn" type="button" style="--lg-glow:var(--mint)">Enabled</button>
-      <button class="lg-btn" type="button" aria-disabled="true">Disabled</button>
-      <button class="lg-btn" type="button" style="--lg-glow:var(--sand)">Click me</button>
-    </div>
-  </section>
+    <section>
+      <h3>Light backdrop</h3>
+      <div class="glass-stage glass-stage--light">
+        <div class="wall"></div>
+        <div class="detail"></div>
+        <div class="panels">
+          <div class="lg-panel lg-panel--light">
+            <h4>Light regular</h4>
+            <p>For light surfaces: a brighter specular edge, a softer cast shadow, dark ink.</p>
+            <div class="meta">blur 30 · light</div>
+          </div>
+          <div class="lg-panel lg-panel--light lg-panel--thin">
+            <h4>Light thin</h4>
+            <p>The same material at the thin weight.</p>
+            <div class="meta">blur 14 · light</div>
+          </div>
+        </div>
+        <div class="caption">light backdrop</div>
+      </div>
+    </section>
 
-  <section>
+    <section>
+      <h3>Radius · rim · grain</h3>
+      <div class="glass-stage" style="padding:40px 32px">
+        <div class="wall"></div>
+        <div class="detail"></div>
+        <div class="panel-grid">
+          <div class="lg-panel" style="--lgp-radius:8">
+            <h4>Small radius</h4>
+            <p><code>--lgp-radius: 8</code></p>
+          </div>
+          <div class="lg-panel" style="--lgp-radius:999">
+            <h4>Pill</h4>
+            <p><code>--lgp-radius: 999</code></p>
+          </div>
+          <div class="lg-panel" style="--lgp-edge:0">
+            <h4>Flat rim</h4>
+            <p><code>--lgp-edge: 0</code></p>
+          </div>
+          <div class="lg-panel" style="--lgp-edge:34">
+            <h4>Thick rim</h4>
+            <p><code>--lgp-edge: 34</code></p>
+          </div>
+          <div class="lg-panel" style="--lgp-grain:0">
+            <h4>No grain</h4>
+            <p><code>--lgp-grain: 0</code></p>
+          </div>
+          <div class="lg-panel" style="--lgp-grain:.7">
+            <h4>Heavy grain</h4>
+            <p><code>--lgp-grain: .7</code></p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ================= Usage ================= -->
+  <div class="comp">
     <h2>Usage</h2>
+    <p class="sub">
+      Each component is one CSS file plus an optional script. Prefer everything
+      in a single file? <a href="glow-button/standalone.html">glow-button/standalone.html</a>
+      and <a href="glass-panel/standalone.html">glass-panel/standalone.html</a>
+      each carry the component and a demo in one self-contained page.
+    </p>
+
     <div class="codeblock">
-<pre><span class="c">&lt;!-- 1. stylesheet --&gt;</span>
+<pre><span class="c">&lt;!-- GlowButton --&gt;</span>
 &lt;<span class="k">link</span> rel=<span class="s">"stylesheet"</span> href=<span class="s">"glow-button/lumina-glow-button.css"</span>&gt;
-
-<span class="c">&lt;!-- 2. markup --&gt;</span>
-&lt;<span class="k">button</span> class=<span class="s">"lg-btn"</span>&gt;Continue&lt;/<span class="k">button</span>&gt;
-
-<span class="c">&lt;!-- 3. behaviour (auto-initialises every .lg-btn) --&gt;</span>
-&lt;<span class="k">script</span> src=<span class="s">"glow-button/lumina-glow-button.js"</span>&gt;&lt;/<span class="k">script</span>&gt;</pre>
+&lt;<span class="k">script</span> src=<span class="s">"glow-button/lumina-glow-button.js"</span>&gt;&lt;/<span class="k">script</span>&gt;
+&lt;<span class="k">button</span> class=<span class="s">"lg-btn"</span>&gt;Continue&lt;/<span class="k">button</span>&gt;</pre>
     </div>
+
     <div class="codeblock">
-<pre><span class="c">/* tune it with CSS custom properties */</span>
-.lg-btn {
-  <span class="k">--lg-glow</span>: <span class="s">182 156 255</span>;   <span class="c">/* r g b */</span>
-  <span class="k">--lg-glow-size</span>: <span class="s">200</span>;       <span class="c">/* trailing glow radius, px */</span>
-  <span class="k">--lg-glow-alpha</span>: <span class="s">1</span>;         <span class="c">/* strength */</span>
-  <span class="k">--lg-radius</span>: <span class="s">14</span>;            <span class="c">/* corner radius, px */</span>
+<pre><span class="c">&lt;!-- GlassPanel (CSS only; the script is for the optional sheen) --&gt;</span>
+&lt;<span class="k">link</span> rel=<span class="s">"stylesheet"</span> href=<span class="s">"glass-panel/lumina-glass-panel.css"</span>&gt;
+&lt;<span class="k">script</span> src=<span class="s">"glass-panel/lumina-glass-panel.js"</span>&gt;&lt;/<span class="k">script</span>&gt;
+&lt;<span class="k">div</span> class=<span class="s">"lg-panel lg-panel--sheen"</span>&gt;…&lt;/<span class="k">div</span>&gt;</pre>
+    </div>
+
+    <div class="codeblock">
+<pre><span class="c">/* GlassPanel tuning */</span>
+.lg-panel {
+  <span class="k">--lgp-blur</span>: <span class="s">30</span>;                <span class="c">/* backdrop blur, px */</span>
+  <span class="k">--lgp-saturate</span>: <span class="s">180</span>;            <span class="c">/* backdrop saturation, % */</span>
+  <span class="k">--lgp-bg</span>: <span class="s">rgba(26,28,36,.46)</span>;  <span class="c">/* glass tint */</span>
+  <span class="k">--lgp-radius</span>: <span class="s">22</span>;               <span class="c">/* corner radius, px */</span>
+  <span class="k">--lgp-edge</span>: <span class="s">14</span>;                 <span class="c">/* refracted rim, 0 disables */</span>
+  <span class="k">--lgp-grain</span>: <span class="s">.16</span>;               <span class="c">/* 0 disables grain */</span>
 }</pre>
     </div>
-  </section>
+  </div>
 
   <footer>
-    <span>LuminaKit · GlowButton</span>
+    <span>LuminaKit · GlowButton · GlassPanel</span>
     <span><a href="https://github.com/chen123aaa/LuminaKit">Repository</a> · MIT License</span>
   </footer>
 
 </div>
 
 <script src="glow-button/lumina-glow-button.js"></script>
+<script src="glass-panel/lumina-glass-panel.js"></script>
 <script>
-  // Color swatches, built here so the page stays a single file
   (function () {
     var palette = [
       { name: "Cyan",   rgb: "111 199 255" },
@@ -334,7 +427,6 @@
       b.style.setProperty("--lg-glow", c.rgb);
       host.appendChild(b);
     });
-    // register the freshly created buttons
     window.LuminaGlowButton.init(host);
   })();
 </script>

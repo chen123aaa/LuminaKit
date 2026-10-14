@@ -13,6 +13,7 @@ SwiftUI for native, plain HTML/CSS/JS for the web. No web dependencies.
 |---|---|---|---|
 | **IridescentBlob** | SwiftUI | Translucent pearl blob with liquid folds, thin-film iridescence, soft high-gloss lighting | [GIF](Docs/Assets/iridescent-blob.gif) · [MP4](Docs/Assets/iridescent-blob.mp4) |
 | **GlowButton** | Web | Button whose soft glow and rim highlight track the pointer | [GIF](Docs/Assets/glow-button.gif) |
+| **GlassPanel** | Web | Frosted-glass surface with a refracted rim, specular hairline and grain | [GIF](Docs/Assets/glass-panel.gif) · [PNG](Docs/Assets/glass-panel.png) |
 
 ---
 
@@ -76,6 +77,55 @@ The script auto-initialises every `.lg-btn` on the page.
 
 Add `.lg-btn--light` when the button sits on a light backdrop.
 
+**Single file:** [`web/glow-button/standalone.html`](web/glow-button/standalone.html)
+holds the component and a demo in one file — copy it anywhere and open it.
+
+**Demo:** open [`web/index.html`](web/index.html).
+
+---
+
+## GlassPanel — Web
+
+![GlassPanel](Docs/Assets/glass-panel.gif)
+
+Frosted glass in the spirit of Apple's materials. It is layered like real glass
+rather than being one translucent fill: a heavy backdrop blur with a saturation
+boost, a **refracted band along the rim** that blurs the backdrop harder so the
+sheet reads as thick, a crisp specular hairline, fine grain so wide gradients do
+not band, and layered elevation shadows.
+
+Pure CSS — the script only adds the optional pointer sheen.
+
+```html
+<link rel="stylesheet" href="web/glass-panel/lumina-glass-panel.css">
+<script src="web/glass-panel/lumina-glass-panel.js"></script>
+
+<div class="lg-panel">…</div>
+```
+
+Thickness: `.lg-panel--thin` · `.lg-panel--thick` · light surfaces:
+`.lg-panel--light` · pointer sheen: `.lg-panel--sheen`.
+
+**Tune it with CSS custom properties**
+
+```css
+.lg-panel {
+  --lgp-blur: 30;                 /* backdrop blur, px */
+  --lgp-saturate: 180;            /* backdrop saturation, % */
+  --lgp-bg: rgba(26,28,36,.46);   /* tint of the glass */
+  --lgp-radius: 22;               /* corner radius, px */
+  --lgp-edge: 14;                 /* refracted rim, 0 disables it */
+  --lgp-grain: .16;               /* 0 disables grain */
+}
+```
+
+A panel needs a real backdrop to sit over — `backdrop-filter` only shows what is
+painted behind the element, so over a flat fill it looks like a plain
+translucent box. It also honours `prefers-reduced-transparency`.
+
+**Single file:** [`web/glass-panel/standalone.html`](web/glass-panel/standalone.html)
+holds the component and a demo in one file — copy it anywhere and open it.
+
 **Demo:** open [`web/index.html`](web/index.html).
 
 ---
@@ -86,6 +136,9 @@ Add `.lg-btn--light` when the button sits on a light backdrop.
 - Thin-film iridescence biased to silhouette edges and creases
 - High-key milk-white base, no harsh shadows
 - Glow follows with a lerped pointer so the light trails instead of snapping
+- Glass is built from layers (refracted rim → grain → sheen → content) rather
+  than one translucent fill, which is what separates real frosted glass from a
+  low-opacity box
 
 ## License
 
