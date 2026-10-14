@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LuminaKit — GlowButton (single file)</title>
+
+<!--
+  LuminaKit · GlowButton — self-contained demo.
+
+  Two things live in this one file:
+    1. THE COMPONENT   — search for "COMPONENT CSS" and "COMPONENT JS".
+                         Copy those two blocks to reuse the button anywhere.
+    2. THE DEMO PAGE   — everything else; safe to delete.
+
+  How it works
+  ------------
+  A button carries three glow layers that all track the pointer:
+    ::before  soft radial glow
+    ::after   1.5px rim highlight (gradient + mask, so only the ring shows)
+    .lg-dot   small specular highlight right under the cursor
+  Position comes from two CSS vars, --lg-mx / --lg-my, written by JS as
+  coordinates relative to the button box. The JS lerps toward the real
+  pointer each frame, so the light trails slightly instead of snapping.
+  --lg-hover (0/1) fades the layers in and out.
+
+  Public CSS custom properties (set on .lg-btn or any ancestor):
+    --lg-glow        glow color as "r g b"             default 111 199 255
+    --lg-glow-size   trailing glow radius, px          default 160
+    --lg-glow-alpha  0-1 overall strength              default 1
+    --lg-radius      corner radius, px                 default 14
+    --lg-bg          surface fill                      default #1b1d23
+    --lg-fg          label color                       default #f5f7fa
+    --lg-border      resting border color              default rgba(255,255,255,.16)
+    --lg-pad-x/y     inner padding                     default 22px / 13px
+
+  Add class .lg-btn--light when the button sits on a light backdrop.
+
+  Gotchas worth keeping (both were real bugs):
+    * the glow layers must NOT use z-index:-1, or they paint behind the
+      button background and vanish
+    * the label is wrapped in .lg-label by JS because plain inline text
+      paints *below* any positioned pseudo-element
+-->
+
+<style>
+/* ============================================================
+   COMPONENT CSS  (lumina-glow-button.css)
+   ============================================================ */
+.lg-btn {
+  --lg-glow: 111 199 255;
+  --lg-glow-size: 160;
+  --lg-glow-alpha: 1;
+  --lg-radius: 14;
+  --lg-bg: #1b1d23;
+  --lg-fg: #f5f7fa;
+  --lg-border: rgba(255, 255, 255, 0.16);
+  --lg-pad-x: 22px;
+  --lg-pad-y: 13px;
+
+  /* live pointer position, driven by JS (unit-space px inside the button) */
+  --lg-mx: 50%;
+  --lg-my: 50%;
+  --lg-hover: 0;
+
+  position: relative;
+  isolation: isolate;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  padding: var(--lg-pad-y) var(--lg-pad-x);
+  border: 0;
+  border-radius: calc(var(--lg-radius) * 1px);
+  background: var(--lg-bg);
+  color: var(--lg-fg);
+
+  font: inherit;
+  font-weight: 550;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  cursor: pointer;
+  overflow: hidden;
+  -webkit-tap-highlight-color: transparent;
+
+  /* resting border drawn via inset shadow so it never fights the glow layers */
+  box-shadow: inset 0 0 0 1px var(--lg-border);
+  transition:
+    transform 0.18s cubic-bezier(0.2, 0.8, 0.3, 1),
+    box-shadow 0.25s ease;
+}
+
+/* ---- 1. soft radial glow that trails the pointer ---- */
+.lg-btn::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  /* Must sit ABOVE the button's own background. z-index:-1 would paint the
+     glow behind the surface and make it invisible. */
+  z-index: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+    calc(var(--lg-glow-size) * 1px) circle at var(--lg-mx) var(--lg-my),
+    rgb(var(--lg-glow) / calc(0.55 * var(--lg-glow-alpha))),
+    rgb(var(--lg-glow) / calc(0.20 * var(--lg-glow-alpha))) 45%,
+    transparent 72%
+  );
+  opacity: var(--lg-hover);
+  transition: opacity 0.25s ease;
+  pointer-events: none;
+}
+
+/* ---- 2. edge highlight near the pointer ---- */
+.lg-btn::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: radial-gradient(
+    calc(var(--lg-glow-size) * 0.9px) circle at var(--lg-mx) var(--lg-my),
+    rgb(var(--lg-glow) / calc(0.95 * var(--lg-glow-alpha))),
+    rgb(var(--lg-glow) / calc(0.30 * var(--lg-glow-alpha))) 40%,
+    transparent 70%
+  );
+  /* keep only the 1.5px ring */
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  opacity: var(--lg-hover);
+  transition: opacity 0.25s ease;
+  pointer-events: none;
+}
+
+/* ---- 3. hot specular dot right under the cursor ---- */
+.lg-btn .lg-dot {
+  position: absolute;
+  z-index: 2;
+  left: var(--lg-mx);
+  top: var(--lg-my);
+  width: 4px;
+  height: 4px;
+  margin: -2px 0 0 -2px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgb(255 255 255 / calc(0.85 * var(--lg-glow-alpha))),
+    transparent 70%
+  );
+  opacity: var(--lg-hover);
+  transition: opacity 0.25s ease;
+  pointer-events: none;
+}
+
+/* label sits above every glow layer */
+.lg-btn > .lg-label {
+  position: relative;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ---- states ---- */
+.lg-btn:hover {
+  --lg-hover: 1;
+}
+
+.lg-btn:active {
+  transform: scale(0.975);
+}
+
+.lg-btn:focus-visible {
+  outline: 2px solid rgb(var(--lg-glow) / 0.9);
+  outline-offset: 2px;
+}
+
+.lg-btn:disabled,
+.lg-btn[aria-disabled="true"] {
+  opacity: 0.45;
+  cursor: not-allowed;
+  --lg-hover: 0 !important;
+}
+
+/* light-backdrop variant: swap to normal blending, softer alpha */
+.lg-btn--light {
+  --lg-bg: #ffffff;
+  --lg-fg: #14161a;
+  --lg-border: rgba(20, 22, 26, 0.12);
+}
+.lg-btn--light::before {
+  mix-blend-mode: normal;
+  background: radial-gradient(
+    calc(var(--lg-glow-size) * 1px) circle at var(--lg-mx) var(--lg-my),
+    rgb(var(--lg-glow) / calc(0.30 * var(--lg-glow-alpha))),
+    rgb(var(--lg-glow) / calc(0.12 * var(--lg-glow-alpha))) 45%,
+    transparent 72%
+  );
+}
+.lg-btn--light::after {
+  padding: 1.25px;
+}
+
+/* brighter blending on dark surfaces */
+.lg-btn:not(.lg-btn--light)::before,
+.lg-btn:not(.lg-btn--light)::after {
+  mix-blend-mode: plus-lighter;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lg-btn,
+  .lg-btn::before,
+  .lg-btn::after,
+  .lg-btn .lg-dot {
+    transition-duration: 0.01ms;
+  }
+  .lg-btn:active {
+    transform: none;
+  }
+}
+
+/* ============================================================
+   END COMPONENT CSS
+   ============================================================ */
+
+/* ---------- demo page styling (not part of the component) ---------- */
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background:
+    radial-gradient(1100px 620px at 50% -12%, rgba(111,199,255,.10), transparent 62%),
+    radial-gradient(900px 520px at 82% 8%, rgba(182,156,255,.07), transparent 60%),
+    #0a0b0f;
+  color: #f2f4f8;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+    "Hiragino Sans GB", "Microsoft YaHei", Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  line-height: 1.55;
+  min-height: 100vh;
+}
+.wrap { max-width: 940px; margin: 0 auto; padding: 64px 28px 88px; }
+.eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 12px; letter-spacing: .14em; text-transform: uppercase;
+  color: #8d95a6; margin-bottom: 16px;
+}
+.eyebrow .pip {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: rgb(111 199 255); box-shadow: 0 0 12px rgb(111 199 255 / .9);
+}
+h1 {
+  font-size: clamp(28px, 5vw, 42px); line-height: 1.1;
+  letter-spacing: -.03em; font-weight: 640; margin: 0 0 12px;
+}
+h1 .grad {
+  background: linear-gradient(96deg, rgb(111 199 255), rgb(182 156 255) 55%, rgb(255 158 196));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+.lede { color: #8d95a6; font-size: 15px; max-width: 56ch; margin: 0 0 40px; }
+.stage {
+  position: relative; display: grid; place-items: center; min-height: 260px;
+  margin-bottom: 56px; border: 1px solid rgba(255,255,255,.08); border-radius: 24px;
+  background:
+    radial-gradient(600px 300px at 50% 50%, rgba(111,199,255,.06), transparent 70%),
+    #14161c;
+  overflow: hidden;
+}
+.stage .lg-btn {
+  font-size: 17px;
+  --lg-pad-x: 30px; --lg-pad-y: 16px; --lg-radius: 16; --lg-glow-size: 220;
+}
+.hint {
+  position: absolute; bottom: 16px; left: 0; right: 0; text-align: center;
+  font-size: 12px; color: #8d95a6;
+}
+h2 {
+  font-size: 13px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase;
+  color: #8d95a6; margin: 0 0 18px; padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+section { margin-bottom: 48px; }
+.row { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; }
+.panel {
+  border: 1px solid rgba(255,255,255,.08); border-radius: 20px;
+  padding: 28px; background: #14161c; flex: 1 1 300px;
+}
+.panel--light { background: #f4f5f8; border-color: rgba(0,0,0,.08); }
+.caption { margin-top: 14px; font-size: 13px; color: #8d95a6; }
+.panel--light .caption { color: #6b7280; }
+footer {
+  border-top: 1px solid rgba(255,255,255,.08); padding-top: 22px;
+  color: #8d95a6; font-size: 13px;
+  display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between;
+}
+a { color: rgb(111 199 255); text-decoration: none; }
+a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow"><span class="pip"></span>LuminaKit</div>
+    <h1>GlowButton — <span class="grad">light that follows</span></h1>
+    <p class="lede">
+      光标跟随光效按钮。鼠标滑过时，柔光、边缘高光和高光点一起跟随指针，
+      并带一点延迟拖尾，让光有重量感。纯 HTML/CSS/JS，零依赖。
+    </p>
+  </header>
+
+  <div class="stage">
+    <button class="lg-btn" type="button">把鼠标移到我身上</button>
+    <div class="hint">hover to see the glow follow the pointer</div>
+  </div>
+
+  <section>
+    <h2>Colors</h2>
+    <div class="row">
+      <button class="lg-btn" type="button" style="--lg-glow:111 199 255">Cyan</button>
+      <button class="lg-btn" type="button" style="--lg-glow:182 156 255">Violet</button>
+      <button class="lg-btn" type="button" style="--lg-glow:255 158 196">Rose</button>
+      <button class="lg-btn" type="button" style="--lg-glow:158 245 216">Mint</button>
+      <button class="lg-btn" type="button" style="--lg-glow:255 214 158">Sand</button>
+    </div>
+  </section>
+
+  <section>
+    <h2>Sizes &amp; shapes</h2>
+    <div class="row">
+      <button class="lg-btn" type="button" style="--lg-radius:8">Small radius</button>
+      <button class="lg-btn" type="button" style="--lg-radius:999;--lg-pad-x:26px">Pill</button>
+      <button class="lg-btn" type="button" style="--lg-glow-size:90">Tight glow</button>
+      <button class="lg-btn" type="button" style="--lg-glow-size:320">Wide glow</button>
+      <button class="lg-btn" type="button" style="--lg-glow-alpha:.45">Subtle</button>
+    </div>
+  </section>
+
+  <section>
+    <h2>Surfaces</h2>
+    <div class="row">
+      <div class="panel">
+        <button class="lg-btn" type="button" style="--lg-glow:182 156 255">Dark surface</button>
+        <p class="caption">Glow blends with <code>plus-lighter</code>.</p>
+      </div>
+      <div class="panel panel--light">
+        <button class="lg-btn lg-btn--light" type="button" style="--lg-glow:111 199 255">Light surface</button>
+        <p class="caption">Normal blend, softer alpha.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>States</h2>
+    <div class="row">
+      <button class="lg-btn" type="button" style="--lg-glow:158 245 216">Enabled</button>
+      <button class="lg-btn" type="button" aria-disabled="true">Disabled</button>
+    </div>
+  </section>
+
+  <footer>
+    <span>LuminaKit · GlowButton · single file</span>
+    <span><a href="https://github.com/chen123aaa/LuminaKit">Repository</a> · MIT License</span>
+  </footer>
+</div>
+
+<script>
+/* ============================================================
+   COMPONENT JS  (lumina-glow-button.js)
+   ============================================================ */
+(function (global) {
+  "use strict";
+
+  var SELECTOR = ".lg-btn";
+  var EASE = 0.18; // 0 = frozen, 1 = no smoothing
+
+  /** @type {Map<Element, State>} */
+  var states = new Map();
+  var rafId = null;
+
+  /**
+   * @typedef {Object} State
+   * @property {HTMLElement} el
+   * @property {number} targetX
+   * @property {number} targetY
+   * @property {number} x
+   * @property {number} y
+   * @property {boolean} hovering
+   * @property {boolean} active
+   */
+
+  function readPointer(el, event) {
+    var rect = el.getBoundingClientRect();
+    return {
+      x: event.clientX - rect.left,
+      y: event.clientY - rect.top
+    };
+  }
+
+  function write(el, state) {
+    el.style.setProperty("--lg-mx", state.x.toFixed(1) + "px");
+    el.style.setProperty("--lg-my", state.y.toFixed(1) + "px");
+    el.style.setProperty("--lg-hover", state.hovering ? "1" : "0");
+  }
+
+  function centerState(el) {
+    var rect = el.getBoundingClientRect();
+    return {
+      x: rect.width / 2,
+      y: rect.height / 2
+    };
+  }
+
+  function attach(el) {
+    if (states.has(el)) return;
+
+    var start = centerState(el);
+    /** @type {State} */
+    var state = {
+      el: el,
+      targetX: start.x,
+      targetY: start.y,
+      x: start.x,
+      y: start.y,
+      hovering: false,
+      active: false
+    };
+    states.set(el, state);
+
+    // Wrap the contents so the label can be lifted above the glow layers.
+    // Inline text paints below any positioned pseudo-element, so without this
+    // wrapper the glow would cover the label.
+    if (!el.querySelector(":scope > .lg-label")) {
+      var label = document.createElement("span");
+      label.className = "lg-label";
+      while (el.firstChild) label.appendChild(el.firstChild);
+      el.appendChild(label);
+    }
+
+    if (!el.querySelector(".lg-dot")) {
+      var dot = document.createElement("span");
+      dot.className = "lg-dot";
+      dot.setAttribute("aria-hidden", "true");
+      el.appendChild(dot);
+    }
+
+    el.addEventListener("pointerenter", function (event) {
+      if (state.el.matches(":disabled, [aria-disabled='true']")) return;
+      var p = readPointer(el, event);
+      // start the glow at the entry point so it does not fly in from center
+      if (!state.hovering) {
+        state.x = p.x;
+        state.y = p.y;
+      }
+      state.targetX = p.x;
+      state.targetY = p.y;
+      state.hovering = true;
+      state.active = true;
+      kick();
+    });
+
+    el.addEventListener("pointermove", function (event) {
+      var p = readPointer(el, event);
+      state.targetX = p.x;
+      state.targetY = p.y;
+      state.active = true;
+      kick();
+    });
+
+    el.addEventListener("pointerleave", function () {
+      state.hovering = false;
+      var c = centerState(el);
+      state.targetX = c.x;
+      state.targetY = c.y;
+      state.active = true;
+      kick();
+    });
+
+    // touch / pen: follow while pressing
+    el.addEventListener("pointerdown", function (event) {
+      var p = readPointer(el, event);
+      state.targetX = p.x;
+      state.targetY = p.y;
+      state.hovering = true;
+      state.active = true;
+      kick();
+    });
+
+    el.addEventListener("pointerup", function () {
+      if (!el.matches(":hover")) state.hovering = false;
+      state.active = true;
+      kick();
+    });
+  }
+
+  function detach(el) {
+    states.delete(el);
+  }
+
+  function kick() {
+    if (rafId !== null) return;
+    rafId = requestAnimationFrame(tick);
+  }
+
+  function tick() {
+    rafId = null;
+    var stillActive = false;
+
+    states.forEach(function (state) {
+      var dx = state.targetX - state.x;
+      var dy = state.targetY - state.y;
+
+      if (Math.abs(dx) < 0.08 && Math.abs(dy) < 0.08) {
+        state.x = state.targetX;
+        state.y = state.targetY;
+        if (!state.hovering) state.active = false;
+        write(state.el, state);
+        return;
+      }
+
+      state.x += dx * EASE;
+      state.y += dy * EASE;
+      write(state.el, state);
+      stillActive = true;
+    });
+
+    // keep animating while anything is still settling
+    if (stillActive) {
+      rafId = requestAnimationFrame(tick);
+    }
+  }
+
+  function init(root) {
+    var scope = root || document;
+    var nodes = scope.querySelectorAll(SELECTOR);
+    for (var i = 0; i < nodes.length; i++) attach(nodes[i]);
+    return nodes.length;
+  }
+
+  // Auto-init, and again after the DOM is ready for deferred scripts.
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", function () {
+      init();
+    });
+  } else {
+    init();
+  }
+
+  global.LuminaGlowButton = {
+    init: init,
+    attach: attach,
+    detach: detach
+  };
+})(window);
+
+/* ============================================================
+   END COMPONENT JS
+   ============================================================ */
+</script>
+</body>
+</html>
