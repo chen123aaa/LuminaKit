@@ -86,7 +86,7 @@ holds the component and a demo in one file — copy it anywhere and open it.
 
 ## GlassPanel — Web
 
-![GlassPanel — Ray Studio settings sheet](Docs/Assets/glass-appearance.gif)
+![GlassPanel — glass appearance settings sheet](Docs/Assets/glass-appearance.gif)
 
 *The glass recipe applied to a real settings sheet — live preview, opacity /
 blur / saturation. The page itself: [`web/examples/glass-appearance/index.html`](web/examples/glass-appearance/index.html).*
@@ -135,7 +135,7 @@ holds the component and a demo in one file — copy it anywhere and open it.
 
 ## Examples
 
-[**Ray Studio — Glass Appearance**](web/examples/glass-appearance/index.html)
+[**Glass Appearance — settings sheet**](web/examples/glass-appearance/index.html)
 puts the same glass recipe on a real settings sheet: a live preview over three
 colour bars, opacity / blur / saturation controls whose value is persisted, and
 both the `prefers-reduced-transparency` and no-`backdrop-filter` fallbacks

@@ -85,7 +85,7 @@ IridescentBlobView(morph: 1.2, speed: 0.8)
 
 ## GlassPanel — Web
 
-![GlassPanel — Ray Studio 设置页](Docs/Assets/glass-appearance.gif)
+![GlassPanel — 玻璃质感设置页](Docs/Assets/glass-appearance.gif)
 
 *同一套玻璃配方落在真实设置页上的样子：实时预览、透明度 / 模糊 / 饱和度。
 页面本身在 [`web/examples/glass-appearance/index.html`](web/examples/glass-appearance/index.html)。*
@@ -132,7 +132,7 @@ IridescentBlobView(morph: 1.2, speed: 0.8)
 
 ## 应用示例
 
-[**Ray Studio — 玻璃质感**](web/examples/glass-appearance/index.html) 把同一套玻璃
+[**玻璃质感设置页**](web/examples/glass-appearance/index.html) 把同一套玻璃
 配方落在一个真实设置页上：三色条背景上的实时预览、透明度 / 模糊 / 饱和度三个滑块
 （数值会被持久化），`prefers-reduced-transparency` 和不支持 `backdrop-filter`
 时的降级也都接好了。单文件，离线可开。

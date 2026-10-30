@@ -13,8 +13,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="dark">
-  <meta name="description" content="Ray Studio 系统设置中的玻璃质感独立交互预览，可离线使用。">
-  <title>玻璃质感 · Ray Studio</title>
+  <meta name="description" content="玻璃质感设置页的独立交互预览：透明度、背景模糊与背景饱和度，可离线使用。">
+  <title>玻璃质感 · 显示与外观</title>
   <style>
     :root {
       color-scheme: dark;
@@ -325,12 +325,12 @@
   <script>
     (() => {
       'use strict';
-      // Values follow Ray Studio's glassAppearance schema. The opacity field
-      // is the background alpha; foreground text is never made transparent.
+      // The opacity field is the background alpha; foreground text is never
+      // made transparent.
       const INITIAL = { enabled: true, opacity: 34, blur: 20, saturation: 121 };
       const DEFAULTS = { enabled: true, opacity: 80, blur: 22, saturation: 115 };
       const LIMITS = { opacity: 100, blur: 50, saturation: 200 };
-      const STORAGE_KEY = 'raystudio.standalone-glass-appearance.v1';
+      const STORAGE_KEY = 'luminakit.glass-appearance.v1';
       const root = document.documentElement;
       const toggle = document.getElementById('enabled');
       const status = document.getElementById('save-status');
