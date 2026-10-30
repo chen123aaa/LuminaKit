@@ -1,0 +1,406 @@
+<!doctype html>
+<!--
+  LuminaKit · example — "Glass Appearance" settings sheet.
+
+  A standalone application of the glass recipe: a live preview over coloured
+  bars, opacity / blur / saturation controls persisted to localStorage, and the
+  prefers-reduced-transparency + no-backdrop-filter fallbacks wired up.
+
+  Self-contained: no external CSS, JS, fonts or images.
+-->
+<html lang="zh-CN" data-glass-enabled="true">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="description" content="Ray Studio 系统设置中的玻璃质感独立交互预览，可离线使用。">
+  <title>玻璃质感 · Ray Studio</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --accent: #00cdee;
+      --text-primary: #fff;
+      --text-secondary: rgba(255, 255, 255, .74);
+      --border: rgba(255, 255, 255, .13);
+      --glass-surface-rgb: 21, 29, 37;
+      --glass-opacity: .34;
+      --glass-blur: 20px;
+      --glass-saturation: 121%;
+      --glass-effective-opacity: .34;
+      --glass-effective-blur: 20px;
+    }
+    * { box-sizing: border-box; }
+    html { min-height: 100%; background: #101920; }
+    body {
+      min-width: 280px;
+      min-height: 100vh;
+      margin: 0;
+      display: grid;
+      place-items: center;
+      padding: 28px;
+      color: var(--text-primary);
+      font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    .ambient {
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+      background: #151d25;
+    }
+    .ambient::before, .ambient::after {
+      content: "";
+      position: absolute;
+      width: min(100%, 960px);
+      height: 700px;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background:
+        radial-gradient(ellipse 100px 26px at 24% 58%, rgba(0, 212, 255, .58), transparent 100%),
+        radial-gradient(ellipse 145px 26px at 6% 69%, rgba(0, 212, 255, .55), transparent 100%),
+        radial-gradient(ellipse 86px 70px at 31% 22%, rgba(224, 227, 233, .21), transparent 100%),
+        radial-gradient(ellipse 64px 32px at 89% 47%, rgba(230, 50, 60, .4), transparent 100%),
+        radial-gradient(ellipse 155px 48px at 53% 72%, rgba(123, 88, 159, .16), transparent 100%);
+      filter: blur(18px);
+    }
+    .ambient::after {
+      background:
+        radial-gradient(ellipse 90px 210px at 16% 99%, rgba(0, 212, 255, .19), transparent 100%),
+        radial-gradient(ellipse 66px 235px at 34% 99%, rgba(159, 120, 193, .15), transparent 100%),
+        radial-gradient(ellipse 80px 130px at 72% 98%, rgba(0, 212, 255, .18), transparent 100%),
+        radial-gradient(ellipse 70px 60px at 99% 11%, rgba(196, 201, 211, .15), transparent 100%);
+      filter: blur(20px);
+    }
+    .glass-surface {
+      background: rgba(var(--glass-surface-rgb), var(--glass-effective-opacity));
+      -webkit-backdrop-filter: blur(var(--glass-effective-blur)) saturate(var(--glass-saturation));
+      backdrop-filter: blur(var(--glass-effective-blur)) saturate(var(--glass-saturation));
+    }
+    .settings {
+      position: relative;
+      width: min(100%, 820px);
+      min-height: 645px;
+      padding: 22px 24px 38px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: 0 24px 80px rgba(0, 0, 0, .22);
+      overflow: hidden;
+    }
+    .breadcrumbs {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      min-height: 24px;
+      margin-bottom: 15px;
+      color: var(--text-secondary);
+      font-size: 12px;
+    }
+    .breadcrumbs .parent { color: var(--accent); }
+    .breadcrumbs svg { width: 14px; height: 14px; }
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      padding-bottom: 16px;
+      margin-bottom: 15px;
+      border-bottom: 1px solid var(--border);
+    }
+    .section-icon {
+      width: 64px;
+      height: 64px;
+      flex: 0 0 64px;
+      display: grid;
+      place-items: center;
+      color: var(--accent);
+      border: 1px solid rgba(0, 205, 238, .35);
+      border-radius: 12px;
+      background: rgba(0, 205, 238, .075);
+    }
+    .section-icon svg { width: 36px; height: 36px; stroke-width: 1.7; }
+    h1 { margin: 0 0 3px; font-size: 22px; line-height: 1.4; font-weight: 650; }
+    .section-header p { margin: 0; color: var(--text-secondary); font-size: 12px; }
+    .preview-section { padding: 0 6px 12px; }
+    .preview-stage {
+      position: relative;
+      display: grid;
+      place-items: center;
+      min-height: 176px;
+      padding: 18px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: #121c23;
+      overflow: hidden;
+    }
+    .preview-colors {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      gap: 16px;
+      padding: 15px;
+    }
+    .preview-colors span {
+      flex: 1;
+      min-width: 0;
+      height: 122px;
+      border-radius: 27px;
+      transform: rotate(-15deg);
+      background: #2792ad;
+    }
+    .preview-colors span:nth-child(2) { background: #8657be; }
+    .preview-colors span:nth-child(3) { background: #c78d37; }
+    .preview-card {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: min(100%, 396px);
+      min-height: 70px;
+      padding: 20px;
+      border: 1px solid rgba(255, 255, 255, .17);
+      border-radius: 13px;
+    }
+    .preview-card strong { font-size: 14px; font-weight: 650; }
+    .setting-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(120px, 196px) 64px;
+      align-items: center;
+      column-gap: 14px;
+      min-height: 53px;
+      padding: 10px 6px;
+      border-bottom: 1px solid var(--border);
+    }
+    .setting-row label, .setting-label { font-size: 14px; font-weight: 650; }
+    .toggle-row { display: flex; justify-content: space-between; }
+    .switch {
+      position: relative;
+      display: inline-flex;
+      flex: 0 0 44px;
+      align-items: center;
+      width: 44px;
+      height: 23px;
+      padding: 0;
+      border: 1px solid rgba(255, 255, 255, .22);
+      border-radius: 999px;
+      background: #3c4950;
+      cursor: pointer;
+      transition: background .15s, border-color .15s;
+    }
+    .switch::after {
+      content: "";
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 17px;
+      height: 17px;
+      background: #fff;
+      border-radius: 50%;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, .12);
+      transition: transform .15s;
+    }
+    .switch[aria-checked="true"] { background: var(--accent); border-color: var(--accent); }
+    .switch[aria-checked="true"]::after { transform: translateX(21px); }
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 30px;
+      margin: 0;
+      border: 0;
+      border-radius: 999px;
+      background: transparent;
+      cursor: pointer;
+      touch-action: pan-y;
+    }
+    input[type="range"]::-webkit-slider-runnable-track {
+      height: 6px;
+      border-radius: 999px;
+      background: linear-gradient(to right, var(--accent) 0 var(--progress), #265368 var(--progress) 100%);
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 22px;
+      height: 22px;
+      margin-top: -8px;
+      border: 0;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+    input[type="range"]::-moz-range-track { height: 6px; border-radius: 999px; background: #265368; }
+    input[type="range"]::-moz-range-progress { height: 6px; border-radius: 999px; background: var(--accent); }
+    input[type="range"]::-moz-range-thumb { width: 22px; height: 22px; border: 0; border-radius: 50%; background: var(--accent); }
+    output { color: var(--text-secondary); text-align: right; font-size: 12px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .reset-row { display: flex; align-items: center; justify-content: space-between; min-height: 48px; padding: 8px 6px 0; }
+    .reset-button { border: 0; border-radius: 5px; padding: 8px 0 8px 12px; background: transparent; color: var(--accent); font: inherit; font-size: 12px; cursor: pointer; }
+    .reset-button:hover { color: #78edff; }
+    .save-status { min-height: 18px; color: var(--text-secondary); font-size: 11px; }
+    button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+    html[data-glass-enabled="false"] .glass-surface {
+      background: rgb(var(--glass-surface-rgb));
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+    }
+    @media (prefers-reduced-transparency: reduce) {
+      .glass-surface { -webkit-backdrop-filter: none; backdrop-filter: none; }
+    }
+    @media (prefers-reduced-motion: reduce) { *, *::after { transition: none !important; } }
+    @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+      .glass-surface { background: rgb(var(--glass-surface-rgb)); }
+    }
+    @media (max-width: 840px) {
+      body { padding: 0; }
+      .settings { width: 100%; min-height: 100vh; border-radius: 0; box-shadow: none; }
+    }
+    @media (max-width: 520px) {
+      .settings { padding: 18px 16px 28px; }
+      .section-icon { width: 54px; height: 54px; flex-basis: 54px; }
+      h1 { font-size: 20px; }
+      .section-header { gap: 12px; }
+      .preview-section { padding-right: 0; padding-left: 0; }
+      .preview-stage { min-height: 160px; padding: 18px; }
+      .preview-colors { gap: 10px; padding: 12px; }
+      .preview-colors span { height: 108px; border-radius: 19px; }
+      .preview-card { width: 86%; }
+      .setting-row { grid-template-columns: minmax(0, 1fr) minmax(90px, 132px) 42px; column-gap: 12px; min-height: 57px; }
+      .setting-row label, .setting-label { font-size: 13px; }
+    }
+    @media (max-width: 330px) {
+      .setting-row { grid-template-columns: minmax(0, 1fr) 88px 40px; column-gap: 8px; padding-right: 0; padding-left: 0; }
+      .section-header p { font-size: 11px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="ambient" aria-hidden="true"></div>
+  <main class="settings glass-surface">
+    <nav class="breadcrumbs" aria-label="所在位置">
+      <span class="parent">显示与外观</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg>
+      <span aria-current="page">玻璃质感</span>
+    </nav>
+    <header class="section-header">
+      <span class="section-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m2 12 9.17 4.18a2 2 0 0 0 1.66 0L22 12M2 17l9.17 4.18a2 2 0 0 0 1.66 0L22 17"/></svg>
+      </span>
+      <div>
+        <h1>玻璃质感</h1>
+        <p>透明度、背景模糊与色彩饱和度</p>
+      </div>
+    </header>
+    <section class="preview-section" aria-label="玻璃质感预览">
+      <div class="preview-stage">
+        <div class="preview-colors" aria-hidden="true"><span></span><span></span><span></span></div>
+        <div class="preview-card glass-surface"><strong>玻璃质感预览</strong></div>
+      </div>
+    </section>
+    <section aria-label="玻璃质感设置">
+      <div class="setting-row toggle-row">
+        <span class="setting-label" id="enabled-label">启用玻璃质感</span>
+        <button class="switch" id="enabled" type="button" role="switch" aria-checked="true" aria-labelledby="enabled-label"></button>
+      </div>
+      <div class="setting-row">
+        <label for="opacity">透明度</label>
+        <input id="opacity" type="range" min="0" max="100" step="1" value="34" aria-describedby="opacity-value">
+        <output id="opacity-value" for="opacity">34 %</output>
+      </div>
+      <div class="setting-row">
+        <label for="blur">模糊强度</label>
+        <input id="blur" type="range" min="0" max="50" step="1" value="20" aria-describedby="blur-value">
+        <output id="blur-value" for="blur">20 px</output>
+      </div>
+      <div class="setting-row">
+        <label for="saturation">背景饱和度</label>
+        <input id="saturation" type="range" min="0" max="200" step="1" value="121" aria-describedby="saturation-value">
+        <output id="saturation-value" for="saturation">121 %</output>
+      </div>
+    </section>
+    <footer class="reset-row">
+      <span class="save-status" id="save-status" role="status" aria-live="polite"></span>
+      <button class="reset-button" id="reset" type="button">恢复默认</button>
+    </footer>
+  </main>
+  <script>
+    (() => {
+      'use strict';
+      // Values follow Ray Studio's glassAppearance schema. The opacity field
+      // is the background alpha; foreground text is never made transparent.
+      const INITIAL = { enabled: true, opacity: 34, blur: 20, saturation: 121 };
+      const DEFAULTS = { enabled: true, opacity: 80, blur: 22, saturation: 115 };
+      const LIMITS = { opacity: 100, blur: 50, saturation: 200 };
+      const STORAGE_KEY = 'raystudio.standalone-glass-appearance.v1';
+      const root = document.documentElement;
+      const toggle = document.getElementById('enabled');
+      const status = document.getElementById('save-status');
+      const fields = Object.fromEntries(Object.keys(LIMITS).map(key => [key, document.getElementById(key)]));
+      let statusTimeout;
+
+      function normalize(raw) {
+        const source = raw && typeof raw === 'object' ? raw : INITIAL;
+        const value = { enabled: source.enabled !== false };
+        for (const [key, max] of Object.entries(LIMITS)) {
+          const rawValue = source[key];
+          const number = rawValue === null || rawValue === '' || typeof rawValue === 'boolean' ? NaN : Number(rawValue);
+          value[key] = Number.isFinite(number) ? Math.round(Math.min(max, Math.max(0, number))) : INITIAL[key];
+        }
+        return value;
+      }
+
+      let state = { ...INITIAL };
+      try {
+        const cached = localStorage.getItem(STORAGE_KEY);
+        if (cached) state = normalize(JSON.parse(cached));
+      } catch (_) { /* Local HTML still works when browser storage is blocked. */ }
+
+      function render() {
+        root.dataset.glassEnabled = String(state.enabled);
+        root.style.setProperty('--glass-opacity', String(state.opacity / 100));
+        root.style.setProperty('--glass-blur', state.blur + 'px');
+        root.style.setProperty('--glass-saturation', state.saturation + '%');
+        root.style.setProperty('--glass-effective-opacity', state.enabled ? String(state.opacity / 100) : '1');
+        root.style.setProperty('--glass-effective-blur', state.enabled ? state.blur + 'px' : '0px');
+        toggle.setAttribute('aria-checked', String(state.enabled));
+        for (const [key, field] of Object.entries(fields)) {
+          const suffix = key === 'blur' ? ' px' : ' %';
+          field.value = state[key];
+          field.style.setProperty('--progress', (state[key] / LIMITS[key] * 100) + '%');
+          field.setAttribute('aria-valuetext', state[key] + suffix);
+          document.getElementById(key + '-value').value = state[key] + suffix;
+        }
+      }
+
+      function persist(message = '已保存到本页面') {
+        clearTimeout(statusTimeout);
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+          status.textContent = message;
+        } catch (_) {
+          status.textContent = '已应用 · 当前浏览器不允许本地保存';
+        }
+        statusTimeout = setTimeout(() => { status.textContent = ''; }, 2200);
+      }
+
+      for (const [key, field] of Object.entries(fields)) {
+        field.addEventListener('input', () => {
+          state[key] = Number(field.value);
+          render();
+        });
+        field.addEventListener('change', () => persist());
+      }
+      toggle.addEventListener('click', () => {
+        state.enabled = !state.enabled;
+        render();
+        persist();
+      });
+      document.getElementById('reset').addEventListener('click', () => {
+        state = { ...DEFAULTS };
+        render();
+        persist('已恢复默认');
+      });
+      render();
+    })();
+  </script>
+</body>
+</html>

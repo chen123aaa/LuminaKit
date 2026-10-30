@@ -127,6 +127,19 @@ IridescentBlobView(morph: 1.2, speed: 0.8)
 
 ---
 
+## 应用示例
+
+[**Ray Studio — 玻璃质感**](web/examples/glass-appearance/index.html) 把同一套玻璃
+配方落在一个真实设置页上：三色条背景上的实时预览、透明度 / 模糊 / 饱和度三个滑块
+（数值会被持久化），`prefers-reduced-transparency` 和不支持 `backdrop-filter`
+时的降级也都接好了。单文件，离线可开。
+
+它保留自己的 `--glass-*` 变量，因为它对应的是真实设置项的 schema，而不是组件 API：
+`--glass-opacity`、`--glass-blur`、`--glass-saturation` 分别对应 `--lgp-bg`
+的 alpha、`--lgp-blur` 和 `--lgp-saturate`。
+
+---
+
 ## 设计要点
 
 - 软 SDF 球体 + domain-warped 脊线噪声（流体褶皱）

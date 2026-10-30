@@ -130,6 +130,21 @@ holds the component and a demo in one file — copy it anywhere and open it.
 
 ---
 
+## Examples
+
+[**Ray Studio — Glass Appearance**](web/examples/glass-appearance/index.html)
+puts the same glass recipe on a real settings sheet: a live preview over three
+colour bars, opacity / blur / saturation controls whose value is persisted, and
+both the `prefers-reduced-transparency` and no-`backdrop-filter` fallbacks
+wired up. One self-contained file that runs offline.
+
+It keeps its own `--glass-*` variables because it mirrors an actual settings
+schema rather than a component API: `--glass-opacity`, `--glass-blur` and
+`--glass-saturation` map to `--lgp-bg`'s alpha, `--lgp-blur` and
+`--lgp-saturate`.
+
+---
+
 ## Design notes
 
 - Soft SDF blob + domain-warped ridged noise (liquid folds)
