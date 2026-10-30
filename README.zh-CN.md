@@ -13,7 +13,7 @@
 |---|---|---|---|
 | **IridescentBlob** | SwiftUI | 半透明珍珠软球：流体褶皱、薄膜虹彩、柔和高光 | [GIF](Docs/Assets/iridescent-blob.gif) · [MP4](Docs/Assets/iridescent-blob.mp4) |
 | **GlowButton** | Web | 光标跟随光效按钮：柔光 + 边缘高光随指针移动 | [GIF](Docs/Assets/glow-button.gif) |
-| **GlassPanel** | Web | 毛玻璃面板：边缘折射带 + 发丝高光 + 细颗粒 | [GIF](Docs/Assets/glass-panel.gif) · [PNG](Docs/Assets/glass-panel.png) |
+| **GlassPanel** | Web | 毛玻璃面板：边缘折射带 + 发丝高光 + 细颗粒 | [PNG](Docs/Assets/glass-appearance.png) |
 
 ---
 
@@ -85,7 +85,10 @@ IridescentBlobView(morph: 1.2, speed: 0.8)
 
 ## GlassPanel — Web
 
-![GlassPanel](Docs/Assets/glass-panel.gif)
+![GlassPanel — Ray Studio 设置页](Docs/Assets/glass-appearance.png)
+
+*同一套玻璃配方落在真实设置页上的样子：实时预览、透明度 / 模糊 / 饱和度。
+页面本身在 [`web/examples/glass-appearance/index.html`](web/examples/glass-appearance/index.html)。*
 
 苹果那种毛玻璃。它不是"一块半透明填充"，而是像真玻璃一样分层叠出来的：
 高强度的背景模糊 + 饱和度提升、**边缘的折射带**（在边缘再叠一层更强模糊，
