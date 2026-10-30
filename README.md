@@ -13,7 +13,7 @@ SwiftUI for native, plain HTML/CSS/JS for the web. No web dependencies.
 |---|---|---|---|
 | **IridescentBlob** | SwiftUI | Translucent pearl blob with liquid folds, thin-film iridescence, soft high-gloss lighting | [GIF](Docs/Assets/iridescent-blob.gif) · [MP4](Docs/Assets/iridescent-blob.mp4) |
 | **GlowButton** | Web | Button whose soft glow and rim highlight track the pointer | [GIF](Docs/Assets/glow-button.gif) |
-| **GlassPanel** | Web | Frosted-glass surface with a refracted rim, specular hairline and grain | [PNG](Docs/Assets/glass-appearance.png) |
+| **GlassPanel** | Web | Frosted-glass surface with a refracted rim, specular hairline and grain | [GIF](Docs/Assets/glass-appearance.gif) · [PNG](Docs/Assets/glass-appearance.png) |
 
 ---
 
@@ -86,7 +86,7 @@ holds the component and a demo in one file — copy it anywhere and open it.
 
 ## GlassPanel — Web
 
-![GlassPanel — Ray Studio settings sheet](Docs/Assets/glass-appearance.png)
+![GlassPanel — Ray Studio settings sheet](Docs/Assets/glass-appearance.gif)
 
 *The glass recipe applied to a real settings sheet — live preview, opacity /
 blur / saturation. The page itself: [`web/examples/glass-appearance/index.html`](web/examples/glass-appearance/index.html).*
